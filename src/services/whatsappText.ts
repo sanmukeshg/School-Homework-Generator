@@ -3,7 +3,22 @@ import { getPreset } from '../data/subjects'
 import type { HomeworkCard, SchoolSettings } from '../types'
 import { stripSubjectPrefix } from '../utils/text'
 
-/** The message the teacher pastes into the parents' group. */
+/**
+ * The caption that rides along with the shared image. Everything a parent
+ * needs to identify the card is already printed on the poster, so this is
+ * only school, class/section and date — never the homework itself.
+ */
+export function buildShareCaption(card: HomeworkCard, settings: SchoolSettings): string {
+  const cls = classLabel(settings, card.classId)
+  const section = sectionLabel(settings, card.sectionId)
+
+  const lines = [settings.schoolName]
+  if (cls) lines.push(section ? `${cls} — Section ${section}` : cls)
+  lines.push(`${card.displayDate} — ${card.day}`)
+  return lines.filter(Boolean).join('\n')
+}
+
+/** The full message behind 'Copy as WhatsApp Text'. */
 export function buildWhatsAppText(card: HomeworkCard, settings: SchoolSettings): string {
   const cls = classLabel(settings, card.classId)
   const section = sectionLabel(settings, card.sectionId)

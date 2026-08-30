@@ -29,7 +29,9 @@ export async function sharePng(
   if (canShareFiles()) {
     const file = new File([blob], filename, { type: 'image/png' })
     try {
-      await navigator.share({ files: [file], title: filename, text })
+      // Title is the caption's first line, not the filename: some share
+      // targets surface it as a subject.
+      await navigator.share({ files: [file], title: text.split('\n')[0] || filename, text })
       return 'shared'
     } catch (error) {
       // The user swiping the sheet away rejects with AbortError — not a failure.

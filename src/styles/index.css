@@ -71,7 +71,10 @@
   input[type='date'] {
     -webkit-appearance: none;
     appearance: none;
-    display: block;
+    /* flex is what actually centres the value on iOS Safari. */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     width: 100%;
     max-width: 100%;
     min-width: 0;
@@ -81,11 +84,14 @@
     height: 48px;
     padding-top: 0;
     padding-bottom: 0;
-    line-height: normal;
+    line-height: 1.2;
   }
   input[type='date']::-webkit-date-and-time-value {
+    flex: 1 1 auto;
     text-align: left;
     margin: 0;
+    padding: 0;
+    line-height: 1.2;
   }
   input[type='date']::-webkit-calendar-picker-indicator {
     margin-left: auto;
@@ -274,7 +280,6 @@
   letter-spacing: 0.06em;
   color: #ffffff;
   text-transform: uppercase;
-  box-shadow: 0 2px 4px rgba(31, 36, 48, 0.18);
 }
 
 .poster-panel {

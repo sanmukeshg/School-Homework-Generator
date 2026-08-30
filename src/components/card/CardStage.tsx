@@ -47,7 +47,13 @@ export const ScaledCard = forwardRef<HTMLDivElement, CardProps>(function ScaledC
     <div ref={wrapperRef} className="w-full overflow-hidden" style={{ height }}>
       <div
         ref={innerRef}
-        style={{ width: CARD_WIDTH, transform: `scale(${scale})`, transformOrigin: 'top left' }}
+        style={{
+          width: CARD_WIDTH,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+          // On the wrapper, not the poster: the export must not include it.
+          filter: 'drop-shadow(0 10px 24px rgba(31,36,48,0.22))'
+        }}
       >
         <HomeworkPoster ref={ref} card={card} settings={settings} />
       </div>

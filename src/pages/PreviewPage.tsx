@@ -10,7 +10,7 @@ import { useToast } from '../hooks/useToast'
 import { deleteCard, getCard, getDraft } from '../services/homeworkService'
 import { buildFileName, renderCardToBlob } from '../services/imageService'
 import { canShareFiles, sharePng } from '../services/shareService'
-import { buildWhatsAppText, copyToClipboard } from '../services/whatsappText'
+import { buildShareCaption, buildWhatsAppText, copyToClipboard } from '../services/whatsappText'
 import { downloadBlob } from '../utils/file'
 import type { HomeworkCard } from '../types'
 
@@ -64,8 +64,8 @@ export function PreviewPage({ cardId }: PreviewPageProps) {
     try {
       const result = await generate()
       if (!result || !card) return
-      const text = buildWhatsAppText(card, settings)
-      const outcome = await sharePng(result.blob, result.filename, text)
+      const caption = buildShareCaption(card, settings)
+      const outcome = await sharePng(result.blob, result.filename, caption)
 
       if (outcome === 'shared') toast('Shared')
       else if (outcome === 'downloaded') {

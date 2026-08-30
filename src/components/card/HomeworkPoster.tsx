@@ -52,8 +52,7 @@ export const HomeworkPoster = forwardRef<HTMLDivElement, HomeworkPosterProps>(
         style={{
           width: CARD_WIDTH,
           borderRadius: 30,
-          border: '6px solid #f0b429',
-          boxShadow: '0 10px 30px rgba(31,36,48,0.25)'
+          border: '6px solid #f0b429'
         }}
       >
         {/* Soft sunburst, as in the reference */}

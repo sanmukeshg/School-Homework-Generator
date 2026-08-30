@@ -108,72 +108,39 @@ const HEX = (hex) => [
   255
 ]
 
-const RAINBOW = ['#fbbf24', '#a3e635', '#22d3ee', '#f472b6', '#c084fc', '#2dd4bf', '#facc15']
-
 /**
- * Draws the chalkboard almanac mark: a wooden frame, the rainbow ALMANAC bars,
- * two chalk lines and the chalk tray.
+ * A closed notebook: teal ground, white cover, amber spine, a bookmark and
+ * three page lines. Simple enough to stay legible at a 60px home-screen size.
+ *
+ * `inset` shrinks the mark for the maskable variant, whose outer ~11% may be
+ * cropped by the launcher.
  */
-function drawIcon(size, { padding = 0 } = {}) {
+function drawIcon(size, { inset = 1 } = {}) {
   const canvas = createCanvas(size)
-  const u = size / 100 // one "unit" = 1% of the icon
-  const pad = padding * size
+  const u = size / 100
 
-  // Maskable icons must paint edge to edge; the padding is safe-zone, not margin.
-  if (pad > 0) canvas.fillRect(0, 0, size, size, HEX('#0b1928'))
+  // Full-bleed ground: iOS and Android apply their own corner mask.
+  canvas.fillRect(0, 0, size, size, HEX('#0d9488'))
 
-  const boardX = pad
-  const boardY = pad
-  const boardSize = size - pad * 2
-  const radius = boardSize * 0.2
+  // Places a percentage-based box, scaled about the centre by `inset`.
+  const box = (x, y, w, h) => [
+    (50 + (x - 50) * inset) * u,
+    (50 + (y - 50) * inset) * u,
+    w * inset * u,
+    h * inset * u
+  ]
 
-  // Wooden frame
-  canvas.fillRoundedRect(boardX, boardY, boardSize, boardSize, radius, HEX('#78350f'))
-  // Chalkboard
-  const inset = boardSize * 0.07
-  canvas.fillRoundedRect(
-    boardX + inset,
-    boardY + inset,
-    boardSize - inset * 2,
-    boardSize - inset * 2,
-    radius * 0.72,
-    HEX('#0b1928')
-  )
-
-  // ALMANAC rainbow blocks
-  const barTop = boardY + boardSize * 0.26
-  const barH = boardSize * 0.13
-  const gutter = boardSize * 0.02
-  const usable = boardSize - inset * 2 - boardSize * 0.14
-  const barW = (usable - gutter * (RAINBOW.length - 1)) / RAINBOW.length
-  let x = boardX + inset + boardSize * 0.07
-  for (const color of RAINBOW) {
-    canvas.fillRoundedRect(x, barTop, barW, barH, Math.max(1, barW * 0.25), HEX(color))
-    x += barW + gutter
-  }
-
-  // Two chalk lines standing in for the homework rows
-  const lineX = boardX + inset + boardSize * 0.09
-  const lineW = boardSize - inset * 2 - boardSize * 0.18
-  canvas.fillRoundedRect(lineX, barTop + barH + 7 * u, lineW, 5 * u, 2.5 * u, [226, 232, 240, 235])
-  canvas.fillRoundedRect(
-    lineX,
-    barTop + barH + 15 * u,
-    lineW * 0.66,
-    5 * u,
-    2.5 * u,
-    [148, 163, 184, 220]
-  )
-
-  // Chalk tray
-  canvas.fillRoundedRect(
-    boardX + inset,
-    boardY + boardSize - inset - 9 * u,
-    boardSize - inset * 2,
-    7 * u,
-    3 * u,
-    HEX('#b45309')
-  )
+  // Cover
+  canvas.fillRoundedRect(...box(25, 19, 50, 62), 6 * u * inset, HEX('#ffffff'))
+  // Spine
+  canvas.fillRoundedRect(...box(25, 19, 11, 62), 5 * u * inset, HEX('#f59e0b'))
+  canvas.fillRect(...box(32, 19, 4, 62), HEX('#f59e0b'))
+  // Bookmark
+  canvas.fillRect(...box(60, 19, 7, 20), HEX('#e11d48'))
+  // Page lines
+  canvas.fillRoundedRect(...box(41, 34, 26, 4.5), 2.25 * u * inset, HEX('#99b4c4'))
+  canvas.fillRoundedRect(...box(41, 45, 26, 4.5), 2.25 * u * inset, HEX('#99b4c4'))
+  canvas.fillRoundedRect(...box(41, 56, 17, 4.5), 2.25 * u * inset, HEX('#99b4c4'))
 
   return encodePng(size, size, canvas.data)
 }
@@ -185,7 +152,7 @@ const outputs = [
   ['icon-512.png', drawIcon(512)],
   ['apple-touch-icon.png', drawIcon(180)],
   // Maskable icons need ~10% safe padding on every side.
-  ['maskable-512.png', drawIcon(512, { padding: 0.11 })]
+  ['maskable-512.png', drawIcon(512, { inset: 0.76 })]
 ]
 
 for (const [name, buffer] of outputs) {

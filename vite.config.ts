@@ -13,14 +13,14 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'School Homework Generator',
+        name: 'Homework',
         short_name: 'Homework',
         description: 'Create the daily school homework card and share it to WhatsApp. Works offline.',
         start_url: '.',
         scope: '.',
         display: 'standalone',
         orientation: 'portrait',
-        theme_color: '#f4f6f9',
+        theme_color: '#0d9488',
         background_color: '#f4f6f9',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },

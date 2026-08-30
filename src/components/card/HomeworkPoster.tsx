@@ -16,9 +16,9 @@ interface HomeworkPosterProps {
  * readable and inside the poster instead of overflowing it.
  */
 function homeworkMetrics(count: number) {
-  if (count <= 5) return { padY: 9, task: 15, label: 11.5 }
-  if (count <= 8) return { padY: 7, task: 13.5, label: 11 }
-  return { padY: 5, task: 12.5, label: 10 }
+  if (count <= 5) return { padY: 9, task: 15, label: 14 }
+  if (count <= 8) return { padY: 7, task: 13.5, label: 12.5 }
+  return { padY: 5, task: 12.5, label: 11.5 }
 }
 
 function fitText(text: string, sizes: [number, number, number], breaks: [number, number]): number {
@@ -100,18 +100,41 @@ export const HomeworkPoster = forwardRef<HTMLDivElement, HomeworkPosterProps>(
             </h1>
           </div>
 
-          {/* Class and section — the first thing a parent reads */}
+          {/* Class and section — the first thing a parent reads. The ribbon is
+              an SVG polygon rather than a CSS clip-path so every renderer, the
+              PNG exporter included, draws the same shape. */}
           {classLine && (
             <div className="mt-3 flex justify-center">
-              <div className="poster-banner flex items-center gap-2.5 px-9 py-1.5">
-                <span style={{ color: '#ffd84d', fontSize: 15 }}>★</span>
+              <div className="relative inline-flex items-center gap-2.5 px-9 py-1.5">
+                <svg
+                  className="absolute inset-0 h-full w-full"
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <defs>
+                    <linearGradient id="bannerFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#e23b3b" />
+                      <stop offset="100%" stopColor="#c81e1e" />
+                    </linearGradient>
+                  </defs>
+                  <polygon
+                    points="4,0 96,0 100,50 96,100 4,100 0,50"
+                    fill="url(#bannerFill)"
+                  />
+                </svg>
+                <span className="relative" style={{ color: '#ffd84d', fontSize: 15 }}>
+                  ★
+                </span>
                 <span
-                  className="font-extrabold uppercase text-white"
+                  className="relative font-extrabold uppercase text-white"
                   style={{ fontSize: 19, letterSpacing: '0.04em' }}
                 >
                   {classLine}
                 </span>
-                <span style={{ color: '#ffd84d', fontSize: 15 }}>★</span>
+                <span className="relative" style={{ color: '#ffd84d', fontSize: 15 }}>
+                  ★
+                </span>
               </div>
             </div>
           )}
@@ -281,11 +304,11 @@ export const HomeworkPoster = forwardRef<HTMLDivElement, HomeworkPosterProps>(
                       <div
                         className="flex-shrink-0 font-extrabold uppercase"
                         style={{
-                          width: 84,
+                          width: 104,
                           color: preset.color,
                           fontSize: metrics.label,
-                          letterSpacing: '0.04em',
-                          lineHeight: 1.25
+                          letterSpacing: '0.02em',
+                          lineHeight: 1.35
                         }}
                       >
                         {name}

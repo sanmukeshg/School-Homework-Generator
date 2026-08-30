@@ -1,7 +1,7 @@
 /**
  * The stationery scene along the bottom of the poster: grass, pencils, a stack
- * of books and a globe. Pure inline SVG so html2canvas can rasterise it with no
- * external assets.
+ * of books and a globe. Pure inline SVG, so it needs no external assets and
+ * rasterises with the rest of the poster.
  */
 export function PosterFooter() {
   return (

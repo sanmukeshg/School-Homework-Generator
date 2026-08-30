@@ -9,11 +9,18 @@ interface CardProps {
 }
 
 /**
- * Visible preview. The card is always laid out at its natural 520px and then
- * scaled down with a transform, so the phone never scrolls sideways and the
- * proportions match the exported PNG exactly.
+ * The one and only poster on screen. It is always laid out at its natural
+ * 520px; only the wrapper is scaled down to fit the phone, so the element the
+ * user sees is exactly the element the PNG is captured from — there is no
+ * second copy and no separate export layout.
+ *
+ * `ref` points at the poster itself (unscaled), which is what the exporter
+ * measures and rasterises.
  */
-export function ScaledCard({ card, settings }: CardProps) {
+export const ScaledCard = forwardRef<HTMLDivElement, CardProps>(function ScaledCard(
+  { card, settings },
+  ref
+) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
@@ -42,24 +49,8 @@ export function ScaledCard({ card, settings }: CardProps) {
         ref={innerRef}
         style={{ width: CARD_WIDTH, transform: `scale(${scale})`, transformOrigin: 'top left' }}
       >
-        <HomeworkPoster card={card} settings={settings} />
+        <HomeworkPoster ref={ref} card={card} settings={settings} />
       </div>
-    </div>
-  )
-}
-
-/**
- * Off-screen, unscaled copy of the card used as the html2canvas source. Keeping
- * capture separate from the preview means the export never depends on the
- * phone's screen size.
- */
-export const CaptureStage = forwardRef<HTMLDivElement, CardProps>(function CaptureStage(
-  { card, settings },
-  ref
-) {
-  return (
-    <div className="capture-stage" data-capture-stage aria-hidden="true">
-      <HomeworkPoster ref={ref} card={card} settings={settings} />
     </div>
   )
 })

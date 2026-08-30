@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ConfirmSheet } from '../components/ConfirmSheet'
 import { TopBar } from '../components/TopBar'
 import { PencilIcon, TrashIcon } from '../components/icons'
-import { CaptureStage, ScaledCard } from '../components/card/CardStage'
+import { ScaledCard } from '../components/card/CardStage'
 import { formatClassSection } from '../data/academics'
 import { useSettings } from '../hooks/useSettings'
 import { useToast } from '../hooks/useToast'
@@ -167,7 +167,8 @@ export function PreviewPage({ cardId }: PreviewPageProps) {
       />
 
       <div className="screen-body pt-4">
-        <ScaledCard card={card} settings={settings} />
+        {/* The preview node itself is the capture source. */}
+        <ScaledCard ref={cardRef} card={card} settings={settings} />
 
         <div className="mt-4 space-y-2">
           <button
@@ -218,8 +219,6 @@ export function PreviewPage({ cardId }: PreviewPageProps) {
         onCancel={() => setAskDelete(false)}
       />
 
-      {/* Off-screen, full resolution source for the PNG. */}
-      <CaptureStage ref={cardRef} card={card} settings={settings} />
     </div>
   )
 }

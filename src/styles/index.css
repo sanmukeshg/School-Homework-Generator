@@ -65,6 +65,42 @@
     overflow-x: hidden;
   }
 
+
+  /* iOS gives date inputs an intrinsic width and centred value, which pushed
+     the field past its card. Force it to behave like every other control. */
+  input[type='date'] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    text-align: left;
+    /* Match the height of the Class and Section controls exactly. */
+    height: 48px;
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: normal;
+  }
+  input[type='date']::-webkit-date-and-time-value {
+    text-align: left;
+    margin: 0;
+  }
+  input[type='date']::-webkit-calendar-picker-indicator {
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  /* Any control inside a flex/grid cell must be allowed to shrink. */
+  input,
+  select,
+  textarea {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
   /* Inputs at >=16px so iOS Safari does not zoom on focus. */
   input,
   textarea,
@@ -245,22 +281,6 @@
   border-radius: 18px;
   border-width: 2px;
   border-style: solid;
-}
-
-/* The class/section banner: a ribbon with clipped ends. */
-.poster-banner {
-  background: linear-gradient(180deg, #e23b3b 0%, #c81e1e 100%);
-  clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0% 50%);
-}
-
-/* The off-screen stage used only for PNG capture. */
-.capture-stage {
-  position: fixed;
-  top: 0;
-  left: -10000px;
-  width: 520px;
-  z-index: -1;
-  pointer-events: none;
 }
 
 ::-webkit-scrollbar {

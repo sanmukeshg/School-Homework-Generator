@@ -4,10 +4,11 @@ import { DEFAULT_SUBJECT_KEYS } from '../data/subjects'
 import { DEFAULT_THEME, normaliseTheme } from './themeService'
 import type { SchoolSettings } from '../types'
 
+/** A blank school: the first-use screen fills these in. */
 export const DEFAULT_SETTINGS: SchoolSettings = {
   id: 'settings',
-  schoolName: 'MMR SCOTTSDALE INTERNATIONAL SCHOOL',
-  initials: 'MMR',
+  schoolName: '',
+  initials: '',
   logoDataUrl: null,
   defaultSubjects: DEFAULT_SUBJECT_KEYS,
   classes: DEFAULT_CLASSES,
@@ -38,6 +39,11 @@ export function withDefaults(stored?: Partial<SchoolSettings> | null): SchoolSet
     theme: stored && 'theme' in stored ? normaliseTheme(stored.theme) : DEFAULT_THEME,
     updatedAt: merged.updatedAt ?? 0
   }
+}
+
+/** True once the teacher has told us which school this is. */
+export function isSchoolConfigured(settings: SchoolSettings): boolean {
+  return settings.schoolName.trim().length > 0 && settings.initials.trim().length > 0
 }
 
 export async function loadSettings(): Promise<SchoolSettings> {

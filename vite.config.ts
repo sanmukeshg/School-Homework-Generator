@@ -13,15 +13,15 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Almanac Homework',
-        short_name: 'Almanac',
-        description: 'Create the daily school almanac & homework card and share it to WhatsApp.',
+        name: 'School Homework Generator',
+        short_name: 'Homework',
+        description: 'Create the daily school homework card and share it to WhatsApp. Works offline.',
         start_url: '.',
         scope: '.',
         display: 'standalone',
         orientation: 'portrait',
-        theme_color: '#0b1928',
-        background_color: '#0b1928',
+        theme_color: '#f4f6f9',
+        background_color: '#f4f6f9',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },

@@ -43,3 +43,21 @@ export function PencilIcon({ className = 'h-5 w-5' }: IconProps) {
     </svg>
   )
 }
+
+/** Functional add control. Drawn, so it sits exactly in the middle. */
+export function PlusIcon({ className = 'h-7 w-7' }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  )
+}

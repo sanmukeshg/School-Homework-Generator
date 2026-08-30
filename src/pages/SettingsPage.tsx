@@ -3,7 +3,12 @@ import { BottomNav } from '../components/BottomNav'
 import { ConfirmSheet } from '../components/ConfirmSheet'
 import { TopBar } from '../components/TopBar'
 import { toOptionId } from '../data/academics'
-import { listSubjects, nextCustomColor } from '../data/subjects'
+import {
+  isBuiltInSubject,
+  listSubjects,
+  nextCustomColor,
+  SUBJECT_PRESETS
+} from '../data/subjects'
 import { useSettings } from '../hooks/useSettings'
 import { useToast } from '../hooks/useToast'
 import { deleteAllHomework, exportBackup, restoreBackup } from '../services/backupService'
@@ -66,18 +71,31 @@ export function SettingsPage() {
   }
 
 
-  /** Adds a school-specific subject; it then behaves like a built-in one. */
+  /**
+   * Adds a subject to the offered list. Typing the name of a built-in that was
+   * removed earlier brings that one back rather than creating a duplicate.
+   */
   function addSubject() {
     const label = newSubject.trim()
     if (!label) return
     const id = toOptionId(label)
+    if (!id) return
+
+    if (settings.removedSubjects.includes(id)) {
+      update({ removedSubjects: settings.removedSubjects.filter((key) => key !== id) })
+      setNewSubject('')
+      toast(`${SUBJECT_PRESETS[id]?.name ?? label} is available again`)
+      return
+    }
+
     const taken = listSubjects(settings).some(
       (subject) => subject.id === id || subject.preset.name.toLowerCase() === label.toLowerCase()
     )
-    if (!id || taken) {
+    if (taken) {
       warn(`${label} is already in the list`)
       return
     }
+
     update({
       customSubjects: [
         ...settings.customSubjects,
@@ -87,9 +105,16 @@ export function SettingsPage() {
     setNewSubject('')
   }
 
-  function removeCustomSubject(id: string) {
+  /**
+   * Takes a subject out of the offered list. Homework already saved with it is
+   * left completely alone — only what a new card can choose from changes.
+   */
+  function removeSubject(id: string) {
     update({
       customSubjects: settings.customSubjects.filter((item) => item.id !== id),
+      removedSubjects: isBuiltInSubject(id)
+        ? [...new Set([...settings.removedSubjects, id])]
+        : settings.removedSubjects,
       defaultSubjects: settings.defaultSubjects.filter((key) => key !== id)
     })
   }
@@ -302,9 +327,9 @@ export function SettingsPage() {
           </p>
 
           <div className="flex flex-wrap gap-2">
+            {/* Every subject removes the same way — built-in or added here. */}
             {listSubjects(settings).map(({ id, preset }) => {
               const active = settings.defaultSubjects.includes(id)
-              const custom = settings.customSubjects.some((item) => item.id === id)
               return (
                 <span key={id} className="inline-flex items-center">
                   <button
@@ -312,8 +337,7 @@ export function SettingsPage() {
                     aria-pressed={active}
                     onClick={() => toggleSubject(id)}
                     className={[
-                      'min-h-[44px] border px-3 text-xs font-semibold transition active:scale-95',
-                      custom ? 'rounded-l-xl border-r-0' : 'rounded-xl',
+                      'min-h-[44px] rounded-l-xl border border-r-0 px-3 text-xs font-semibold transition active:scale-95',
                       active
                         ? 'border-accent bg-accent/10 text-accent'
                         : 'border-line bg-surface-2 text-muted'
@@ -322,17 +346,15 @@ export function SettingsPage() {
                     {active ? '✓ ' : ''}
                     {preset.name}
                   </button>
-                  {/* Only subjects the school added can be removed. */}
-                  {custom && (
-                    <button
-                      type="button"
-                      aria-label={`Remove ${preset.name}`}
-                      onClick={() => removeCustomSubject(id)}
-                      className="flex min-h-[44px] items-center rounded-r-xl border border-line bg-surface-2 px-2.5 text-lg font-semibold text-danger active:scale-95"
-                    >
-                      −
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    aria-label={`Remove ${preset.name}`}
+                    title={`Remove ${preset.name}`}
+                    onClick={() => removeSubject(id)}
+                    className="flex min-h-[44px] items-center rounded-r-xl border border-line bg-surface-2 px-3 text-lg font-semibold text-danger active:scale-95"
+                  >
+                    −
+                  </button>
                 </span>
               )
             })}

@@ -140,7 +140,7 @@ export function useCardEditor(
       if (!current.card) return current
       const used = current.card.items.map((item) => item.subjectKey)
       const all = listSubjects(settings).map((subject) => subject.id)
-      const nextKey = all.find((key) => !used.includes(key)) ?? 'english'
+      const nextKey = all.find((key) => !used.includes(key)) ?? all[0] ?? 'english'
       const items = [...current.card.items, createItem(nextKey, 'Read Chapter and do Q/A.')]
       return { ...current, card: { ...current.card, items }, dirty: true, restoredDraft: false }
     })

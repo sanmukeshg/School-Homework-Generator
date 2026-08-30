@@ -4,7 +4,7 @@ import { Modal } from '../components/Modal'
 import { TopBar } from '../components/TopBar'
 import { ScaledCard } from '../components/card/CardStage'
 import { formatClassSection } from '../data/academics'
-import { listSubjects } from '../data/subjects'
+import { listSubjects, resolveSubject } from '../data/subjects'
 import { randomLifeSkill } from '../data/lifeSkills'
 import { randomVocabulary } from '../data/vocabulary'
 import { useCardEditor } from '../hooks/useCardEditor'
@@ -74,6 +74,18 @@ export function EditorPage({ cardId }: EditorPageProps) {
     } finally {
       saving.current = false
     }
+  }
+
+
+  /**
+   * Options for one row. A card saved with a subject that has since been
+   * removed in Settings keeps that subject in its own dropdown, so opening and
+   * re-saving an old card never silently rewrites it.
+   */
+  function subjectOptionsFor(currentKey: string) {
+    const offered = listSubjects(settings)
+    if (offered.some((subject) => subject.id === currentKey)) return offered
+    return [...offered, { id: currentKey, preset: resolveSubject(settings, currentKey) }]
   }
 
   async function openExisting(existing: HomeworkCard) {
@@ -307,7 +319,7 @@ export function EditorPage({ cardId }: EditorPageProps) {
                     value={item.subjectKey}
                     onChange={(event) => editor.changeSubject(item.id, event.target.value)}
                   >
-                    {listSubjects(settings).map((subject) => (
+                    {subjectOptionsFor(item.subjectKey).map((subject) => (
                       <option key={subject.id} value={subject.id}>
                         {subject.preset.name}
                       </option>

@@ -47,12 +47,20 @@ export function getPreset(key: string): SubjectPreset {
  * resolves through here so a custom subject behaves like a built-in one.
  */
 export function listSubjects(settings: SchoolSettings): { id: string; preset: SubjectPreset }[] {
-  const builtIns = SUBJECT_KEYS.map((id) => ({ id, preset: SUBJECT_PRESETS[id] }))
+  const removed = new Set(settings.removedSubjects ?? [])
+  const builtIns = SUBJECT_KEYS.filter((id) => !removed.has(id)).map((id) => ({
+    id,
+    preset: SUBJECT_PRESETS[id]
+  }))
   const custom = (settings.customSubjects ?? []).map((item) => ({
     id: item.id,
     preset: { name: item.label, color: item.color, glyph: 'book' } as SubjectPreset
   }))
   return [...builtIns, ...custom]
+}
+
+export function isBuiltInSubject(id: string): boolean {
+  return Object.prototype.hasOwnProperty.call(SUBJECT_PRESETS, id)
 }
 
 export function resolveSubject(settings: SchoolSettings, key: string): SubjectPreset {

@@ -66,6 +66,8 @@ export interface SchoolSettings {
   sections: SectionOption[]
   /** Extra subjects created in Settings. */
   customSubjects: CustomSubject[]
+  /** Built-in subjects the school has removed from the offered list. */
+  removedSubjects: string[]
   theme: ThemeName
   updatedAt: number
 }

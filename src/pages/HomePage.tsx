@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
+import { PlusIcon } from '../components/icons'
 import { formatClassSection } from '../data/academics'
 import { useSettings } from '../hooks/useSettings'
 import {
@@ -175,7 +176,7 @@ export function HomePage() {
         type="button"
         aria-label="Create homework"
         onClick={() => navigate('/new')}
-        className="fixed right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full text-3xl font-light leading-none transition active:scale-90"
+        className="fixed right-5 z-40 grid h-14 w-14 place-items-center rounded-full transition active:scale-90"
         style={{
           bottom: 'calc(84px + env(safe-area-inset-bottom))',
           backgroundImage: 'linear-gradient(135deg, rgb(var(--c-primary)), rgb(var(--c-primary-2)))',
@@ -183,7 +184,7 @@ export function HomePage() {
           boxShadow: '0 8px 20px rgb(var(--c-primary) / 0.4)'
         }}
       >
-        +
+        <PlusIcon />
       </button>
 
       <BottomNav />

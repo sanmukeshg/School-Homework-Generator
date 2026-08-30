@@ -1,5 +1,5 @@
 import { classLabel, sectionLabel } from '../data/academics'
-import { getPreset } from '../data/subjects'
+import { resolveSubject } from '../data/subjects'
 import type { HomeworkCard, SchoolSettings } from '../types'
 import { stripSubjectPrefix } from '../utils/text'
 
@@ -34,7 +34,7 @@ export function buildWhatsAppText(card: HomeworkCard, settings: SchoolSettings):
   lines.push('')
   lines.push('*Word of the Day:*')
   lines.push(card.word)
-  if (card.meaning.trim()) {
+  if (card.showMeaning !== false && card.meaning.trim()) {
     lines.push('')
     lines.push('*Meaning:*')
     lines.push(card.meaning)
@@ -52,9 +52,15 @@ export function buildWhatsAppText(card: HomeworkCard, settings: SchoolSettings):
     lines.push('No homework today.')
   } else {
     for (const item of items) {
-      const name = item.subjectName || getPreset(item.subjectKey).name
+      const name = item.subjectName || resolveSubject(settings, item.subjectKey).name
       lines.push(`${name}: ${stripSubjectPrefix(item.task, name)}`)
     }
+  }
+
+  if (card.announcement?.trim()) {
+    lines.push('')
+    lines.push('*ANNOUNCEMENT*')
+    lines.push(card.announcement.trim())
   }
 
   lines.push('')

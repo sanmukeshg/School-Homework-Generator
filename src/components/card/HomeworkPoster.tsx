@@ -1,10 +1,11 @@
 import { forwardRef } from 'react'
 import { formatClassSectionLong } from '../../data/academics'
-import { getPreset } from '../../data/subjects'
+import { resolveSubject } from '../../data/subjects'
 import { CARD_WIDTH } from '../../services/imageService'
 import type { HomeworkCard, SchoolSettings } from '../../types'
 import { stripSubjectPrefix } from '../../utils/text'
 import { PosterFooter } from './PosterFooter'
+import { SpeakerGlyph, SubjectGlyph } from './SubjectGlyph'
 
 interface HomeworkPosterProps {
   card: HomeworkCard
@@ -16,9 +17,9 @@ interface HomeworkPosterProps {
  * readable and inside the poster instead of overflowing it.
  */
 function homeworkMetrics(count: number) {
-  if (count <= 5) return { padY: 9, task: 15, label: 14 }
-  if (count <= 8) return { padY: 7, task: 13.5, label: 12.5 }
-  return { padY: 5, task: 12.5, label: 11.5 }
+  if (count <= 5) return { padY: 9, task: 15, label: 14, icon: 22 }
+  if (count <= 8) return { padY: 7, task: 13.5, label: 12.5, icon: 19 }
+  return { padY: 5, task: 12.5, label: 11.5, icon: 17 }
 }
 
 function fitText(text: string, sizes: [number, number, number], breaks: [number, number]): number {
@@ -33,6 +34,11 @@ function fitText(text: string, sizes: [number, number, number], breaks: [number,
  *
  * This design is frozen: it has its own palette and typography and is never
  * affected by the application's Light/Dark theme.
+ *
+ * Every heading is `whiteSpace: nowrap`. Android measured the pills with
+ * slightly different font metrics and wrapped their text onto a second line,
+ * which pushed the headings out of their pills and cut the section letter off
+ * the class banner.
  */
 export const HomeworkPoster = forwardRef<HTMLDivElement, HomeworkPosterProps>(
   function HomeworkPoster({ card, settings }, ref) {
@@ -44,16 +50,15 @@ export const HomeworkPoster = forwardRef<HTMLDivElement, HomeworkPosterProps>(
     const skillSize = fitText(card.lifeSkill, [20, 18, 16], [58, 92])
     const meaningSize = fitText(card.meaning, [13, 12, 11], [46, 74])
 
+    const showMeaning = card.showMeaning !== false && card.meaning.trim().length > 0
+    const announcement = card.announcement?.trim() ?? ''
+
     return (
       <div
         ref={ref}
         data-capture-root
         className="poster relative overflow-hidden"
-        style={{
-          width: CARD_WIDTH,
-          borderRadius: 30,
-          border: '6px solid #f0b429'
-        }}
+        style={{ width: CARD_WIDTH, borderRadius: 30, border: '6px solid #f0b429' }}
       >
         {/* Soft sunburst, as in the reference */}
         <div
@@ -83,8 +88,6 @@ export const HomeworkPoster = forwardRef<HTMLDivElement, HomeworkPosterProps>(
               )}
             </div>
 
-            {/* The school's identity: its own display face, wrapping to a
-                second line for long names. */}
             <h1
               className="poster-school flex-1 text-center uppercase"
               style={{
@@ -99,12 +102,13 @@ export const HomeworkPoster = forwardRef<HTMLDivElement, HomeworkPosterProps>(
             </h1>
           </div>
 
-          {/* Class and section — the first thing a parent reads. The ribbon is
-              an SVG polygon rather than a CSS clip-path so every renderer, the
-              PNG exporter included, draws the same shape. */}
+          {/* Class and section — an SVG ribbon so every renderer agrees on the shape */}
           {classLine && (
             <div className="mt-3 flex justify-center">
-              <div className="relative inline-flex items-center gap-2.5 px-9 py-1.5">
+              <div
+                className="relative inline-flex items-center gap-2.5 px-9 py-1.5"
+                style={{ whiteSpace: 'nowrap' }}
+              >
                 <svg
                   className="absolute inset-0 h-full w-full"
                   viewBox="0 0 100 100"
@@ -117,21 +121,18 @@ export const HomeworkPoster = forwardRef<HTMLDivElement, HomeworkPosterProps>(
                       <stop offset="100%" stopColor="#c81e1e" />
                     </linearGradient>
                   </defs>
-                  <polygon
-                    points="4,0 96,0 100,50 96,100 4,100 0,50"
-                    fill="url(#bannerFill)"
-                  />
+                  <polygon points="4,0 96,0 100,50 96,100 4,100 0,50" fill="url(#bannerFill)" />
                 </svg>
-                <span className="relative" style={{ color: '#ffd84d', fontSize: 15 }}>
+                <span className="relative flex-shrink-0" style={{ color: '#ffd84d', fontSize: 15 }}>
                   ★
                 </span>
                 <span
-                  className="relative font-extrabold uppercase text-white"
-                  style={{ fontSize: 19, letterSpacing: '0.04em' }}
+                  className="relative flex-shrink-0 font-extrabold uppercase text-white"
+                  style={{ fontSize: 19, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}
                 >
                   {classLine}
                 </span>
-                <span className="relative" style={{ color: '#ffd84d', fontSize: 15 }}>
+                <span className="relative flex-shrink-0" style={{ color: '#ffd84d', fontSize: 15 }}>
                   ★
                 </span>
               </div>
@@ -196,7 +197,7 @@ export const HomeworkPoster = forwardRef<HTMLDivElement, HomeworkPosterProps>(
             </div>
           </section>
 
-          {/* Word of the day */}
+          {/* Word of the day — two columns when the meaning is left out */}
           <section className="mt-4">
             <div className="relative z-10 flex justify-center">
               <span
@@ -210,7 +211,10 @@ export const HomeworkPoster = forwardRef<HTMLDivElement, HomeworkPosterProps>(
               className="poster-panel px-3 pb-3.5 pt-6"
               style={{ backgroundColor: '#e8f2fd', borderColor: '#a7c8ee', marginTop: -14 }}
             >
-              <div className="grid" style={{ gridTemplateColumns: '1fr 1.25fr 1fr' }}>
+              <div
+                className="grid"
+                style={{ gridTemplateColumns: showMeaning ? '1fr 1.25fr 1fr' : '1fr 1fr' }}
+              >
                 <div className="px-1.5 text-center">
                   <div
                     className="font-extrabold uppercase"
@@ -226,28 +230,38 @@ export const HomeworkPoster = forwardRef<HTMLDivElement, HomeworkPosterProps>(
                   </div>
                 </div>
 
-                <div
-                  className="px-2 text-center"
-                  style={{
-                    borderLeft: '1.5px dashed #9dc0e8',
-                    borderRight: '1.5px dashed #9dc0e8'
-                  }}
-                >
+                {showMeaning && (
                   <div
-                    className="font-extrabold uppercase"
-                    style={{ color: '#1971c2', fontSize: 11, letterSpacing: '0.1em' }}
+                    className="px-2 text-center"
+                    style={{
+                      borderLeft: '1.5px dashed #9dc0e8',
+                      borderRight: '1.5px dashed #9dc0e8'
+                    }}
                   >
-                    Meaning
+                    <div
+                      className="font-extrabold uppercase"
+                      style={{ color: '#1971c2', fontSize: 11, letterSpacing: '0.1em' }}
+                    >
+                      Meaning
+                    </div>
+                    <div
+                      className="font-bold"
+                      style={{
+                        fontSize: meaningSize,
+                        color: '#12304f',
+                        lineHeight: 1.3,
+                        marginTop: 3
+                      }}
+                    >
+                      {card.meaning}
+                    </div>
                   </div>
-                  <div
-                    className="font-bold"
-                    style={{ fontSize: meaningSize, color: '#12304f', lineHeight: 1.3, marginTop: 3 }}
-                  >
-                    {card.meaning}
-                  </div>
-                </div>
+                )}
 
-                <div className="px-1.5 text-center">
+                <div
+                  className="px-1.5 text-center"
+                  style={showMeaning ? undefined : { borderLeft: '1.5px dashed #9dc0e8' }}
+                >
                   <div
                     className="font-extrabold uppercase"
                     style={{ color: '#1971c2', fontSize: 11, letterSpacing: '0.1em' }}
@@ -280,37 +294,36 @@ export const HomeworkPoster = forwardRef<HTMLDivElement, HomeworkPosterProps>(
               style={{ backgroundColor: '#ffffff', borderColor: '#eeaeae', marginTop: -14 }}
             >
               {items.length === 0 ? (
-                <p
-                  className="py-4 text-center font-bold"
-                  style={{ fontSize: 15, color: '#6b7280' }}
-                >
+                <p className="py-4 text-center font-bold" style={{ fontSize: 15, color: '#6b7280' }}>
                   No homework today.
                 </p>
               ) : (
                 items.map((item, index) => {
-                  const preset = getPreset(item.subjectKey)
+                  const preset = resolveSubject(settings, item.subjectKey)
                   const name = item.subjectName || preset.name
                   return (
                     <div
                       key={item.id}
-                      className="flex items-start gap-3"
+                      className="flex items-start gap-2"
                       style={{
                         paddingTop: metrics.padY,
                         paddingBottom: metrics.padY,
                         borderBottom: index < items.length - 1 ? '1px solid #f0eef0' : 'none'
                       }}
                     >
-                      <div
-                        className="flex-shrink-0 font-extrabold uppercase"
-                        style={{
-                          width: 104,
-                          color: preset.color,
-                          fontSize: metrics.label,
-                          letterSpacing: '0.02em',
-                          lineHeight: 1.35
-                        }}
-                      >
-                        {name}
+                      <div className="flex flex-shrink-0 items-center gap-1.5" style={{ width: 128 }}>
+                        <SubjectGlyph glyph={preset.glyph} color={preset.color} size={metrics.icon} />
+                        <span
+                          className="font-extrabold uppercase"
+                          style={{
+                            color: preset.color,
+                            fontSize: metrics.label,
+                            letterSpacing: '0.02em',
+                            lineHeight: 1.35
+                          }}
+                        >
+                          {name}
+                        </span>
                       </div>
                       <div
                         className="flex-1 font-semibold"
@@ -331,6 +344,39 @@ export const HomeworkPoster = forwardRef<HTMLDivElement, HomeworkPosterProps>(
               )}
             </div>
           </section>
+
+          {/* Announcement — only when the teacher wrote one */}
+          {announcement && (
+            <section className="mt-4">
+              <div className="relative z-10 flex justify-center">
+                <span
+                  className="poster-pill"
+                  style={{
+                    backgroundImage: 'linear-gradient(180deg,#16a394,#0f766e)',
+                    fontSize: 13
+                  }}
+                >
+                  <SpeakerGlyph />
+                  Announcement
+                </span>
+              </div>
+              <div
+                className="poster-panel px-4 pb-3.5 pt-6 text-center"
+                style={{ backgroundColor: '#e9f8f5', borderColor: '#8fd3c8', marginTop: -14 }}
+              >
+                <p
+                  className="font-bold"
+                  style={{
+                    fontSize: fitText(announcement, [15, 14, 13], [64, 110]),
+                    lineHeight: 1.35,
+                    color: '#12403a'
+                  }}
+                >
+                  {announcement}
+                </p>
+              </div>
+            </section>
+          )}
         </div>
 
         <PosterFooter />

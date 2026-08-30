@@ -3,7 +3,7 @@ import { BottomNav } from '../components/BottomNav'
 import { ConfirmSheet } from '../components/ConfirmSheet'
 import { TopBar } from '../components/TopBar'
 import { toOptionId } from '../data/academics'
-import { SUBJECT_PRESETS } from '../data/subjects'
+import { listSubjects, nextCustomColor } from '../data/subjects'
 import { useSettings } from '../hooks/useSettings'
 import { useToast } from '../hooks/useToast'
 import { deleteAllHomework, exportBackup, restoreBackup } from '../services/backupService'
@@ -19,6 +19,7 @@ export function SettingsPage() {
   const [busy, setBusy] = useState(false)
   const [newClass, setNewClass] = useState('')
   const [newSection, setNewSection] = useState('')
+  const [newSubject, setNewSubject] = useState('')
   const [askDeleteAll, setAskDeleteAll] = useState(false)
 
   async function handleLogo(file: File | undefined) {
@@ -62,6 +63,35 @@ export function SettingsPage() {
     const next = list.filter((item) => item.id !== id)
     if (kind === 'classes') update({ classes: next })
     else update({ sections: next })
+  }
+
+
+  /** Adds a school-specific subject; it then behaves like a built-in one. */
+  function addSubject() {
+    const label = newSubject.trim()
+    if (!label) return
+    const id = toOptionId(label)
+    const taken = listSubjects(settings).some(
+      (subject) => subject.id === id || subject.preset.name.toLowerCase() === label.toLowerCase()
+    )
+    if (!id || taken) {
+      warn(`${label} is already in the list`)
+      return
+    }
+    update({
+      customSubjects: [
+        ...settings.customSubjects,
+        { id, label, color: nextCustomColor(settings.customSubjects) }
+      ]
+    })
+    setNewSubject('')
+  }
+
+  function removeCustomSubject(id: string) {
+    update({
+      customSubjects: settings.customSubjects.filter((item) => item.id !== id),
+      defaultSubjects: settings.defaultSubjects.filter((key) => key !== id)
+    })
   }
 
   async function handleExport() {
@@ -264,32 +294,68 @@ export function SettingsPage() {
           </div>
         </section>
 
-        {/* Default subjects */}
+        {/* Subjects */}
         <section className="panel">
-          <h2 className="panel-title mb-1">Default Subjects</h2>
-          <p className="mb-3 text-xs text-muted">Loaded automatically when you start a new card.</p>
+          <h2 className="panel-title mb-1">Subject Settings</h2>
+          <p className="mb-3 text-xs text-muted">
+            Tap a subject to load it automatically when you start a new card.
+          </p>
 
           <div className="flex flex-wrap gap-2">
-            {Object.entries(SUBJECT_PRESETS).map(([key, preset]) => {
-              const active = settings.defaultSubjects.includes(key)
+            {listSubjects(settings).map(({ id, preset }) => {
+              const active = settings.defaultSubjects.includes(id)
+              const custom = settings.customSubjects.some((item) => item.id === id)
               return (
-                <button
-                  key={key}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => toggleSubject(key)}
-                  className={[
-                    'min-h-[44px] rounded-xl border px-3 text-xs font-semibold transition active:scale-95',
-                    active
-                      ? 'border-accent bg-accent/10 text-accent'
-                      : 'border-line bg-surface-2 text-muted'
-                  ].join(' ')}
-                >
-                  {active ? '✓ ' : ''}
-                  {preset.name}
-                </button>
+                <span key={id} className="inline-flex items-center">
+                  <button
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => toggleSubject(id)}
+                    className={[
+                      'min-h-[44px] border px-3 text-xs font-semibold transition active:scale-95',
+                      custom ? 'rounded-l-xl border-r-0' : 'rounded-xl',
+                      active
+                        ? 'border-accent bg-accent/10 text-accent'
+                        : 'border-line bg-surface-2 text-muted'
+                    ].join(' ')}
+                  >
+                    {active ? '✓ ' : ''}
+                    {preset.name}
+                  </button>
+                  {/* Only subjects the school added can be removed. */}
+                  {custom && (
+                    <button
+                      type="button"
+                      aria-label={`Remove ${preset.name}`}
+                      onClick={() => removeCustomSubject(id)}
+                      className="flex min-h-[44px] items-center rounded-r-xl border border-line bg-surface-2 px-2.5 text-lg font-semibold text-danger active:scale-95"
+                    >
+                      −
+                    </button>
+                  )}
+                </span>
               )
             })}
+          </div>
+
+          <div className="mt-3 flex gap-2">
+            <input
+              type="text"
+              className="field flex-1"
+              placeholder="e.g. Sanskrit"
+              aria-label="Add subject"
+              value={newSubject}
+              onChange={(event) => setNewSubject(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  addSubject()
+                }
+              }}
+            />
+            <button type="button" onClick={addSubject} className="btn-secondary px-4">
+              + Add Subject
+            </button>
           </div>
         </section>
 

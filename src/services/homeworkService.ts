@@ -25,6 +25,8 @@ export function createEmptyCard(
     word: VOCABULARY_LIST[0].word,
     meaning: VOCABULARY_LIST[0].meaning,
     synonym: VOCABULARY_LIST[0].syn,
+    showMeaning: true,
+    announcement: '',
     items: settings.defaultSubjects.map((key) => createItem(key)),
     createdAt: now,
     updatedAt: now

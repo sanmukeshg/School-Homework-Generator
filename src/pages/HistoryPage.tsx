@@ -5,6 +5,7 @@ import { ConfirmSheet } from '../components/ConfirmSheet'
 import { TopBar } from '../components/TopBar'
 import { TrashIcon } from '../components/icons'
 import { formatClassSection } from '../data/academics'
+import { listSubjects, resolveSubject } from '../data/subjects'
 import { useSettings } from '../hooks/useSettings'
 import { useToast } from '../hooks/useToast'
 import { countFilledItems, deleteCard, listCards } from '../services/homeworkService'
@@ -17,7 +18,9 @@ export function HistoryPage() {
   const { toast } = useToast()
   const [cards, setCards] = useState<HomeworkCard[]>([])
   const [loading, setLoading] = useState(true)
-  const [filterDate, setFilterDate] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [subject, setSubject] = useState('')
   const [pendingDelete, setPendingDelete] = useState<HomeworkCard | null>(null)
 
   useEffect(() => {
@@ -40,12 +43,28 @@ export function HistoryPage() {
     toast('Homework deleted')
   }
 
+  const filtering = Boolean(fromDate || toDate || subject)
+
   // Filtering is a plain read over data already loaded — offline safe, and it
-  // never touches the records themselves.
+  // never touches the records themselves. The three filters combine.
   const visible = useMemo(
-    () => (filterDate ? cards.filter((card) => card.date === filterDate) : cards),
-    [cards, filterDate]
+    () =>
+      cards.filter((card) => {
+        if (fromDate && card.date < fromDate) return false
+        if (toDate && card.date > toDate) return false
+        if (subject && !card.items.some((item) => item.subjectKey === subject && item.task.trim())) {
+          return false
+        }
+        return true
+      }),
+    [cards, fromDate, toDate, subject]
   )
+
+  function clearFilters() {
+    setFromDate('')
+    setToDate('')
+    setSubject('')
+  }
 
   // Group by day, newest first (listCards is already sorted that way).
   const days = useMemo(() => {
@@ -63,33 +82,74 @@ export function HistoryPage() {
       <TopBar title="History" subtitle="Every card you have saved" />
 
       <div className="screen-body pt-4">
-        {/* Date filter */}
+        {/* Filters — dates and subject, applied together */}
         <div className="panel mb-4">
-          <label className="field-label" htmlFor="history-filter">
-            Filter by date
-          </label>
-          <div className="flex gap-2">
-            <input
-              id="history-filter"
-              type="date"
-              className="field flex-1"
-              value={filterDate}
-              onChange={(event) => setFilterDate(event.target.value)}
-            />
+          <h2 className="panel-title mb-3">Filters</h2>
+
+          <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
+            <div>
+              <label className="field-label" htmlFor="history-from">
+                From date
+              </label>
+              <input
+                id="history-from"
+                type="date"
+                className="field"
+                value={fromDate}
+                max={toDate || undefined}
+                onChange={(event) => setFromDate(event.target.value)}
+              />
+            </div>
+            <div>
+              <label className="field-label" htmlFor="history-to">
+                To date
+              </label>
+              <input
+                id="history-to"
+                type="date"
+                className="field"
+                value={toDate}
+                min={fromDate || undefined}
+                onChange={(event) => setToDate(event.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <label className="field-label" htmlFor="history-subject">
+              Subject
+            </label>
+            <select
+              id="history-subject"
+              className="select"
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+            >
+              <option value="">All subjects</option>
+              {listSubjects(settings).map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.preset.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <p className="text-xs text-muted">
+              {filtering
+                ? `Showing ${visible.length} ${visible.length === 1 ? 'card' : 'cards'}`
+                : `${cards.length} ${cards.length === 1 ? 'card' : 'cards'} saved`}
+              {subject && filtering ? ` with ${resolveSubject(settings, subject).name}` : ''}
+            </p>
             <button
               type="button"
-              onClick={() => setFilterDate('')}
-              disabled={!filterDate}
+              onClick={clearFilters}
+              disabled={!filtering}
               className="btn-secondary px-4 text-sm"
             >
               Clear
             </button>
           </div>
-          {filterDate && (
-            <p className="mt-2 text-xs text-muted">
-              Showing {visible.length} {visible.length === 1 ? 'card' : 'cards'} for this date.
-            </p>
-          )}
         </div>
 
         {loading ? (
@@ -97,9 +157,9 @@ export function HistoryPage() {
         ) : days.length === 0 ? (
           <div className="panel text-center">
             <p className="text-sm text-muted">
-              {filterDate ? 'No homework saved for that date.' : 'No homework saved yet.'}
+              {filtering ? 'No homework matches these filters.' : 'No homework saved yet.'}
             </p>
-            {!filterDate && (
+            {!filtering && (
               <button
                 type="button"
                 onClick={() => navigate('/new')}

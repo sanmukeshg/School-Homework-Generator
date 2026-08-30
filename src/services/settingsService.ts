@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS: SchoolSettings = {
   defaultSubjects: DEFAULT_SUBJECT_KEYS,
   classes: DEFAULT_CLASSES,
   sections: DEFAULT_SECTIONS,
+  customSubjects: [],
   theme: DEFAULT_THEME,
   updatedAt: 0
 }
@@ -35,6 +36,7 @@ export function withDefaults(stored?: Partial<SchoolSettings> | null): SchoolSet
     defaultSubjects: merged.defaultSubjects?.length ? merged.defaultSubjects : DEFAULT_SUBJECT_KEYS,
     classes: merged.classes?.length ? merged.classes : DEFAULT_CLASSES,
     sections: merged.sections?.length ? merged.sections : DEFAULT_SECTIONS,
+    customSubjects: merged.customSubjects ?? [],
     // A stored preference wins; anything unknown falls back to Light.
     theme: stored && 'theme' in stored ? normaliseTheme(stored.theme) : DEFAULT_THEME,
     updatedAt: merged.updatedAt ?? 0

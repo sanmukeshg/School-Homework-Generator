@@ -280,6 +280,8 @@
   letter-spacing: 0.06em;
   color: #ffffff;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .poster-panel {

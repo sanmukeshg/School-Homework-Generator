@@ -40,6 +40,10 @@ export interface HomeworkCard {
   /** Optional meaning of the word of the day. */
   meaning: string
   synonym: string
+  /** Word of the Day can be printed without its meaning column. */
+  showMeaning: boolean
+  /** Optional notice printed under the homework list. Empty means hidden. */
+  announcement: string
   items: HomeworkItem[]
   createdAt: number
   updatedAt: number
@@ -60,6 +64,8 @@ export interface SchoolSettings {
   classes: ClassOption[]
   /** Central section list. */
   sections: SectionOption[]
+  /** Extra subjects created in Settings. */
+  customSubjects: CustomSubject[]
   theme: ThemeName
   updatedAt: number
 }
@@ -82,5 +88,14 @@ export interface BackupFile {
 export interface SubjectPreset {
   name: string
   /** Label colour on the generated poster. */
+  color: string
+  /** Which illustration to draw beside the subject. */
+  glyph: string
+}
+
+/** A subject the school added itself, stored alongside the built-in presets. */
+export interface CustomSubject {
+  id: string
+  label: string
   color: string
 }

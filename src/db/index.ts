@@ -79,6 +79,8 @@ export function normaliseCard(card: Partial<HomeworkCard> & { id: string }): Hom
     word: card.word ?? '',
     meaning: card.meaning ?? '',
     synonym: card.synonym ?? '',
+    showMeaning: card.showMeaning ?? true,
+    announcement: card.announcement ?? '',
     items: card.items ?? [],
     createdAt: card.createdAt ?? Date.now(),
     updatedAt: card.updatedAt ?? Date.now()

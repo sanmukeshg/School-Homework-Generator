@@ -4,7 +4,7 @@ import { Modal } from '../components/Modal'
 import { TopBar } from '../components/TopBar'
 import { ScaledCard } from '../components/card/CardStage'
 import { formatClassSection } from '../data/academics'
-import { SUBJECT_PRESETS } from '../data/subjects'
+import { listSubjects } from '../data/subjects'
 import { randomLifeSkill } from '../data/lifeSkills'
 import { randomVocabulary } from '../data/vocabulary'
 import { useCardEditor } from '../hooks/useCardEditor'
@@ -47,7 +47,9 @@ export function EditorPage({ cardId }: EditorPageProps) {
     if (!current.classId) return 'Select a class first'
     if (!current.sectionId) return 'Select a section first'
     if (!current.word.trim()) return 'Enter the word of the day'
-    if (!current.meaning.trim()) return 'Enter the meaning of the word'
+    if (current.showMeaning && !current.meaning.trim()) {
+      return 'Enter the meaning, or switch it off'
+    }
     if (!current.synonym.trim()) return 'Enter a synonym'
     return null
   }
@@ -237,17 +239,41 @@ export function EditorPage({ cardId }: EditorPageProps) {
               />
             </div>
             <div>
-              <label className="field-label" htmlFor="meaning-input">
-                Meaning
-              </label>
-              <textarea
-                id="meaning-input"
-                rows={2}
-                className="field resize-none"
-                placeholder="A wish or goal that we hope to achieve."
-                value={card.meaning}
-                onChange={(event) => editor.patch({ meaning: event.target.value })}
-              />
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <label className="field-label mb-0" htmlFor="meaning-input">
+                  Meaning
+                </label>
+                {/* Off leaves the meaning out of the card entirely; the word
+                    and synonym then share the space. */}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={card.showMeaning}
+                  onClick={() => editor.patch({ showMeaning: !card.showMeaning })}
+                  className={[
+                    'min-h-[36px] rounded-full border px-3 text-[11px] font-semibold transition active:scale-95',
+                    card.showMeaning
+                      ? 'border-accent bg-accent/10 text-accent'
+                      : 'border-line bg-surface-2 text-muted'
+                  ].join(' ')}
+                >
+                  {card.showMeaning ? '✓ Included' : 'Excluded'}
+                </button>
+              </div>
+              {card.showMeaning ? (
+                <textarea
+                  id="meaning-input"
+                  rows={2}
+                  className="field resize-none"
+                  placeholder="A wish or goal that we hope to achieve."
+                  value={card.meaning}
+                  onChange={(event) => editor.patch({ meaning: event.target.value })}
+                />
+              ) : (
+                <p className="rounded-xl border border-dashed border-line px-3.5 py-3 text-xs text-muted">
+                  The meaning will not appear on the card.
+                </p>
+              )}
             </div>
             <div>
               <label className="field-label" htmlFor="synonym-input">
@@ -281,9 +307,9 @@ export function EditorPage({ cardId }: EditorPageProps) {
                     value={item.subjectKey}
                     onChange={(event) => editor.changeSubject(item.id, event.target.value)}
                   >
-                    {Object.entries(SUBJECT_PRESETS).map(([key, preset]) => (
-                      <option key={key} value={key}>
-                        {preset.name}
+                    {listSubjects(settings).map((subject) => (
+                      <option key={subject.id} value={subject.id}>
+                        {subject.preset.name}
                       </option>
                     ))}
                   </select>
@@ -315,7 +341,26 @@ export function EditorPage({ cardId }: EditorPageProps) {
           </button>
         </section>
 
-        {/* 5. Preview */}
+        {/* 5. Announcement — optional notice printed under the homework */}
+        <section className="panel">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <h2 className="panel-title">Announcement</h2>
+            <span className="text-[11px] text-faint">Optional</span>
+          </div>
+          <p className="mb-3 text-xs text-muted">
+            Anything important for parents. Left blank, it does not appear on the card.
+          </p>
+          <textarea
+            id="announcement-input"
+            rows={2}
+            className="field resize-none"
+            placeholder="e.g. Bring your science notebook tomorrow."
+            value={card.announcement}
+            onChange={(event) => editor.patch({ announcement: event.target.value })}
+          />
+        </section>
+
+        {/* 6. Preview */}
         <section className="panel">
           <button
             type="button"

@@ -10,7 +10,7 @@ import {
   saveCard,
   saveDraft
 } from '../services/homeworkService'
-import { getPreset, SUBJECT_KEYS } from '../data/subjects'
+import { listSubjects, resolveSubject } from '../data/subjects'
 import { useDebouncedEffect } from './useDebouncedEffect'
 import type { HomeworkCard, HomeworkItem, SchoolSettings } from '../types'
 import { dayName, formatDisplayDate, fromDateKey } from '../utils/date'
@@ -130,20 +130,21 @@ export function useCardEditor(
 
   const changeSubject = useCallback(
     (id: string, subjectKey: string) => {
-      updateItem(id, { subjectKey, subjectName: getPreset(subjectKey).name })
+      updateItem(id, { subjectKey, subjectName: resolveSubject(settings, subjectKey).name })
     },
-    [updateItem]
+    [updateItem, settings]
   )
 
   const addItem = useCallback(() => {
     setState((current) => {
       if (!current.card) return current
       const used = current.card.items.map((item) => item.subjectKey)
-      const nextKey = SUBJECT_KEYS.find((key) => !used.includes(key)) ?? 'english'
+      const all = listSubjects(settings).map((subject) => subject.id)
+      const nextKey = all.find((key) => !used.includes(key)) ?? 'english'
       const items = [...current.card.items, createItem(nextKey, 'Read Chapter and do Q/A.')]
       return { ...current, card: { ...current.card, items }, dirty: true, restoredDraft: false }
     })
-  }, [])
+  }, [settings])
 
   const removeItem = useCallback((id: string) => {
     setState((current) => {

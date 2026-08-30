@@ -1,0 +1,273 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------
+   Themes — Light and Dark only.
+   Only the app chrome reads these. The homework poster keeps its own
+   fixed colours so the exported PNG is identical in both themes.
+   --------------------------------------------------------------- */
+:root,
+:root[data-theme='light'] {
+  --c-bg: 244 246 249;
+  --c-surface: 255 255 255;
+  --c-surface-2: 248 250 252;
+  --c-border: 226 231 238;
+  --c-text: 17 24 39;
+  --c-muted: 90 103 122;
+  --c-faint: 130 143 161;
+  --c-accent: 180 83 9;
+  --c-accent-soft: 254 243 199;
+  --c-primary: 5 150 105;
+  --c-primary-2: 13 148 136;
+  --c-on-primary: 255 255 255;
+  --c-danger: 190 18 60;
+  --c-danger-soft: 255 235 238;
+  --c-shadow: 15 23 42 / 0.1;
+}
+
+:root[data-theme='dark'] {
+  --c-bg: 15 23 42;
+  --c-surface: 30 41 59;
+  --c-surface-2: 22 32 50;
+  --c-border: 51 65 85;
+  --c-text: 241 245 249;
+  --c-muted: 156 170 188;
+  --c-faint: 116 132 152;
+  --c-accent: 251 191 36;
+  --c-accent-soft: 69 39 8;
+  --c-primary: 16 185 129;
+  --c-primary-2: 13 148 136;
+  --c-on-primary: 255 255 255;
+  --c-danger: 244 63 94;
+  --c-danger-soft: 76 5 25;
+  --c-shadow: 0 0 0 / 0.45;
+}
+
+/* ---------------------------------------------------------------
+   App shell — mobile first
+   --------------------------------------------------------------- */
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-app text-ink font-sans antialiased;
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  #root {
+    overflow-x: hidden;
+  }
+
+  /* Inputs at >=16px so iOS Safari does not zoom on focus. */
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 16px;
+    font-family: inherit;
+  }
+}
+
+@layer components {
+  .app-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .screen {
+    @apply min-h-full flex flex-col;
+  }
+
+  .screen-body {
+    @apply flex-1 overflow-y-auto px-4 pb-6;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  .panel {
+    @apply bg-surface border border-line rounded-2xl p-4;
+    box-shadow: 0 1px 2px rgb(var(--c-shadow));
+  }
+
+  /* Section headings: weight and letter-spacing carry the hierarchy. */
+  .panel-title {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-muted;
+  }
+
+  .field {
+    @apply w-full bg-surface-2 border border-line rounded-xl px-3.5 py-3 text-ink min-h-[48px]
+           placeholder-faint focus:outline-none focus:border-accent focus:ring-2
+           focus:ring-accent/20 transition;
+  }
+
+  .field-label {
+    @apply block text-[11px] font-semibold uppercase tracking-[0.12em] text-muted mb-1.5;
+  }
+
+
+  /* Native selects render at different heights per platform; normalising the
+     box and drawing our own chevron keeps Class and Section identical. */
+  .select {
+    @apply field appearance-none bg-no-repeat pr-10 leading-tight;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%278%27 viewBox=%270 0 12 8%27 fill=%27none%27 stroke=%27%23748196%27 stroke-width=%271.8%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27><path d=%27M1 1.5 6 6.5 11 1.5%27/></svg>");
+    background-position: right 0.85rem center;
+    background-size: 12px 8px;
+  }
+
+  /* Compact header actions (edit, delete). */
+  .icon-btn {
+    @apply inline-flex h-11 w-11 items-center justify-center rounded-xl border border-line
+           bg-surface-2 text-ink active:scale-90 transition;
+  }
+  .icon-btn-danger {
+    @apply icon-btn text-danger;
+    border-color: rgb(var(--c-danger) / 0.35);
+  }
+
+  /* Minimum 44px touch targets everywhere. */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold
+           min-h-[48px] px-4 active:scale-[0.97] transition disabled:opacity-50
+           disabled:active:scale-100 select-none;
+  }
+  .btn-primary {
+    @apply btn;
+    background-image: linear-gradient(90deg, rgb(var(--c-primary)), rgb(var(--c-primary-2)));
+    color: rgb(var(--c-on-primary));
+    box-shadow: 0 6px 16px rgb(var(--c-primary) / 0.26);
+  }
+  .btn-secondary {
+    @apply btn bg-surface-2 text-ink border border-line;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-muted border border-line;
+  }
+  .btn-danger {
+    @apply btn border text-danger;
+    background-color: rgb(var(--c-danger-soft));
+    border-color: rgb(var(--c-danger) / 0.4);
+  }
+
+  /* Secondary actions such as "Random Idea": real buttons, never link text. */
+  .btn-chip {
+    @apply inline-flex items-center justify-center rounded-full border border-line
+           bg-surface-2 px-4 text-xs font-semibold text-ink no-underline
+           min-h-[44px] active:scale-95 transition select-none;
+  }
+  .btn-chip:active {
+    background-color: rgb(var(--c-accent-soft));
+  }
+
+  /* Circular remove control on a homework row. */
+  .btn-remove {
+    @apply inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full
+           border text-xl font-semibold leading-none text-danger active:scale-90 transition;
+    border-color: rgb(var(--c-danger) / 0.35);
+    background-color: rgb(var(--c-danger-soft) / 0.6);
+  }
+
+  .sticky-actions {
+    @apply sticky bottom-0 z-30 bg-app/95 backdrop-blur border-t border-line px-4 pt-3;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  }
+
+  .chip {
+    @apply rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider border;
+  }
+  .chip-accent {
+    @apply chip text-accent;
+    background-color: rgb(var(--c-accent-soft));
+    border-color: rgb(var(--c-accent) / 0.35);
+  }
+  .chip-brand {
+    @apply chip text-brand;
+    background-color: rgb(var(--c-primary) / 0.12);
+    border-color: rgb(var(--c-primary) / 0.35);
+  }
+
+  /* Floating pill navigation. */
+  .nav-dock {
+    @apply sticky bottom-0 z-40 px-4 pt-2;
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, rgb(var(--c-bg)) 65%, rgb(var(--c-bg) / 0));
+  }
+  .nav-pill-bar {
+    @apply mx-auto flex max-w-md items-center gap-1 rounded-full border border-line bg-surface p-1.5;
+    box-shadow: 0 6px 20px rgb(var(--c-shadow));
+  }
+  .nav-item {
+    @apply flex min-h-[44px] flex-1 items-center justify-center rounded-full px-3
+           text-[11px] font-semibold uppercase tracking-[0.12em] text-muted transition;
+  }
+  .nav-item-active {
+    @apply text-ink;
+    background-color: rgb(var(--c-accent-soft));
+    box-shadow: inset 0 0 0 1px rgb(var(--c-accent) / 0.35);
+  }
+}
+
+/* ---------------------------------------------------------------
+   Homework poster — FROZEN design, fixed palette, theme independent.
+   --------------------------------------------------------------- */
+.poster {
+  font-family: 'Nunito', 'Inter', system-ui, sans-serif;
+  background-color: #fffdf0;
+  background-image: linear-gradient(160deg, #fffef7 0%, #fff8dd 45%, #fdf0c4 100%);
+  color: #1f2430;
+}
+
+.poster-school {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 800;
+}
+
+/* Section header pills sit on top of their panel. */
+.poster-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 22px;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+  text-transform: uppercase;
+  box-shadow: 0 2px 4px rgba(31, 36, 48, 0.18);
+}
+
+.poster-panel {
+  border-radius: 18px;
+  border-width: 2px;
+  border-style: solid;
+}
+
+/* The class/section banner: a ribbon with clipped ends. */
+.poster-banner {
+  background: linear-gradient(180deg, #e23b3b 0%, #c81e1e 100%);
+  clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0% 50%);
+}
+
+/* The off-screen stage used only for PNG capture. */
+.capture-stage {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 520px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--c-border));
+  border-radius: 4px;
+}

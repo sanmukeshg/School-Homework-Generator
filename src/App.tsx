@@ -10,6 +10,7 @@ import { SettingsPage } from './pages/SettingsPage'
 import { WelcomePage } from './pages/WelcomePage'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { EntitlementProvider } from './hooks/useEntitlement'
+import { useHomeworkSync } from './hooks/useHomeworkSync'
 import { SettingsProvider, useSettings } from './hooks/useSettings'
 import { ToastProvider } from './hooks/useToast'
 import { initializeFirebase } from './firebase/app'
@@ -79,6 +80,12 @@ function RequireAuth({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+/** Keeps the local homework cache in step with the account. */
+function HomeworkSync({ children }: { children: ReactNode }) {
+  useHomeworkSync()
+  return <>{children}</>
+}
+
 /**
  * A fresh installation has no school yet, so the first-use screen stands in
  * front of the whole app until the name and initials are saved locally.
@@ -102,17 +109,19 @@ export default function App() {
             <Boot>
               <RequireAuth>
                 <EntitlementProvider>
-                  <RequireSchool>
-                    <Routes>
-                      <Route path="/" element={<HomePage />} />
-                      <Route path="/new" element={<NewCardRoute />} />
-                      <Route path="/edit/:cardId" element={<EditorRoute />} />
-                      <Route path="/preview/:cardId" element={<PreviewRoute />} />
-                      <Route path="/history" element={<HistoryPage />} />
-                      <Route path="/settings" element={<SettingsPage />} />
-                      <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                  </RequireSchool>
+                  <HomeworkSync>
+                    <RequireSchool>
+                      <Routes>
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/new" element={<NewCardRoute />} />
+                        <Route path="/edit/:cardId" element={<EditorRoute />} />
+                        <Route path="/preview/:cardId" element={<PreviewRoute />} />
+                        <Route path="/history" element={<HistoryPage />} />
+                        <Route path="/settings" element={<SettingsPage />} />
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                      </Routes>
+                    </RequireSchool>
+                  </HomeworkSync>
                 </EntitlementProvider>
               </RequireAuth>
             </Boot>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
 import { PlusIcon } from '../components/icons'
 import { formatClassSection } from '../data/academics'
+import { useHomeworkSyncSignal } from '../hooks/useHomeworkSync'
 import { useSettings } from '../hooks/useSettings'
 import {
   countFilledItems,
@@ -25,6 +26,8 @@ export function HomePage() {
   const [today, setToday] = useState<DashboardEntry[]>([])
   const [recent, setRecent] = useState<HomeworkCard[]>([])
   const [loading, setLoading] = useState(true)
+  // A completed sync should refresh what is already on screen.
+  const syncSignal = useHomeworkSyncSignal()
 
   const todayId = todayKey()
   const now = new Date()
@@ -44,7 +47,7 @@ export function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [todayId])
+  }, [todayId, syncSignal])
 
   return (
     <div className="screen">

@@ -1,6 +1,8 @@
 import { listCards, putCards } from './homeworkService'
 import { loadSettings, saveSettings, withDefaults } from './settingsService'
 import { clearHomeworkData, normaliseCard } from '../db'
+import { cloudDeleteAllCards } from './cloudHomeworkService'
+import { getActiveUid } from './session'
 import { downloadBlob, readFileAsText } from '../utils/file'
 import type { BackupFile, HomeworkCard } from '../types'
 import { toDateKey } from '../utils/date'
@@ -67,6 +69,11 @@ export async function restoreBackup(file: Blob): Promise<RestoreResult> {
 /** Clears homework only; the school configuration survives. */
 export async function deleteAllHomework(): Promise<void> {
   await clearHomeworkData()
+
+  // Signed in, "all homework" means the account's, not just this device's —
+  // otherwise the next sync would pull it all back.
+  const uid = getActiveUid()
+  if (uid) await cloudDeleteAllCards(uid)
 }
 
 function isValidCard(value: unknown): value is HomeworkCard {

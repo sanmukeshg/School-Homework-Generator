@@ -6,9 +6,8 @@ rules_version = '2';
 // to the signed-in user's own uid taken from request.auth — never from a value
 // the client sends.
 //
-// Covered so far: the profile and the account record. Settings and homework are
-// still local-only and are therefore still denied; their rules land with the
-// migration that starts writing them.
+// Covered: the profile, its settings, its homework, the sync marker and the
+// account record.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -51,9 +50,27 @@ service cloud.firestore {
         allow delete: if false;
       }
 
-      // Homework is still local-only; its rules land with that migration.
-      match /homework/{docId} {
-        allow read, write: if false;
+      // Homework. The owner does everything to their own cards and nothing to
+      // anyone else's. The shape checks are cheap guards, not the security
+      // boundary — ownership is. updatedAt must be the server's clock so a
+      // wrong device clock cannot make a stale card win a merge.
+      match /homework/{cardId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.schemaVersion is int
+          && request.resource.data.date is string
+          && request.resource.data.classId is string
+          && request.resource.data.sectionId is string
+          && request.resource.data.items is list;
+      }
+
+      // Records that this account's pre-existing local history has been merged.
+      match /sync/{docId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.homeworkMigratedAt == request.time;
+        allow delete: if false;
       }
     }
 

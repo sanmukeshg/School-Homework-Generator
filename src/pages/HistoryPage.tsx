@@ -6,6 +6,7 @@ import { TopBar } from '../components/TopBar'
 import { TrashIcon } from '../components/icons'
 import { formatClassSection } from '../data/academics'
 import { listSubjects, resolveSubject } from '../data/subjects'
+import { useHomeworkSyncSignal } from '../hooks/useHomeworkSync'
 import { useSettings } from '../hooks/useSettings'
 import { useToast } from '../hooks/useToast'
 import { countFilledItems, deleteCard, listCards } from '../services/homeworkService'
@@ -22,10 +23,11 @@ export function HistoryPage() {
   const [toDate, setToDate] = useState('')
   const [subject, setSubject] = useState('')
   const [pendingDelete, setPendingDelete] = useState<HomeworkCard | null>(null)
+  const syncSignal = useHomeworkSyncSignal()
 
   useEffect(() => {
     void refresh()
-  }, [])
+  }, [syncSignal])
 
   async function refresh() {
     const all = await listCards()

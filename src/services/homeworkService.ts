@@ -5,6 +5,8 @@ import { VOCABULARY_LIST } from '../data/vocabulary'
 import type { DraftRecord, HomeworkCard, HomeworkItem, SchoolSettings } from '../types'
 import { dayName, formatDisplayDate, fromDateKey } from '../utils/date'
 import { uid } from '../utils/id'
+import { cloudDeleteCard, cloudPutCards, cloudSaveCard } from './cloudHomeworkService'
+import { getActiveUid } from './session'
 
 /** Builds a fresh, unsaved card. Class and section start empty on purpose. */
 export function createEmptyCard(
@@ -42,6 +44,13 @@ export function createItem(subjectKey: string, task = ''): HomeworkItem {
   }
 }
 
+/**
+ * Reads always come from IndexedDB.
+ *
+ * It is the application's cache, not a signed-out fallback: it answers
+ * instantly, works offline, and keeps History and Home off the network as the
+ * teacher navigates. The cloud reaches it through the pull in homeworkSync.
+ */
 export async function getCard(id: string): Promise<HomeworkCard | undefined> {
   const db = await getDB()
   const card = await db.get(STORE_CARDS, id)
@@ -83,6 +92,13 @@ export async function findConflict(card: HomeworkCard): Promise<HomeworkCard | u
   return existing && existing.id !== card.id ? existing : undefined
 }
 
+/**
+ * Saves a card to both the cloud and the local mirror.
+ *
+ * The local write keeps history readable when signed out and keeps the backup
+ * export working; the cloud write is what reaches the teacher's other devices.
+ * Offline, Firestore queues its half and sends it on reconnect.
+ */
 export async function saveCard(card: HomeworkCard): Promise<HomeworkCard> {
   const db = await getDB()
   const existing = await db.get(STORE_CARDS, card.id)
@@ -91,9 +107,14 @@ export async function saveCard(card: HomeworkCard): Promise<HomeworkCard> {
     createdAt: existing?.createdAt ?? card.createdAt ?? Date.now(),
     updatedAt: Date.now()
   }
+
   await db.put(STORE_CARDS, next)
   // The saved copy is now the source of truth; the draft is no longer needed.
   await db.delete(STORE_DRAFTS, card.id)
+
+  const uid = getActiveUid()
+  if (uid) await cloudSaveCard(uid, next)
+
   return next
 }
 
@@ -101,6 +122,9 @@ export async function deleteCard(id: string): Promise<void> {
   const db = await getDB()
   await db.delete(STORE_CARDS, id)
   await db.delete(STORE_DRAFTS, id)
+
+  const uid = getActiveUid()
+  if (uid) await cloudDeleteCard(uid, id)
 }
 
 export async function putCards(cards: HomeworkCard[]): Promise<void> {
@@ -108,6 +132,9 @@ export async function putCards(cards: HomeworkCard[]): Promise<void> {
   const tx = db.transaction(STORE_CARDS, 'readwrite')
   await Promise.all(cards.map((card) => tx.store.put(card)))
   await tx.done
+
+  const uid = getActiveUid()
+  if (uid) await cloudPutCards(uid, cards)
 }
 
 /* ------------------------------ drafts ------------------------------ */

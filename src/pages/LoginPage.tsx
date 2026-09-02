@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BrandMark } from '../components/BrandMark'
 import { GoogleIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
+import { isAppCheckConfigured } from '../firebase/appCheck'
 
 /**
  * The sign-in screen. Google is the only provider, matching what is enabled on
@@ -65,6 +66,31 @@ export function LoginPage() {
           Your homework stays on your device and in your own account. Nothing is shared with other
           schools.
         </p>
+
+        {/* Required wording when the reCAPTCHA badge is hidden. */}
+        {isAppCheckConfigured() && (
+          <p className="mt-2 text-center text-[10px] leading-relaxed text-faint">
+            This site is protected by reCAPTCHA and the Google{' '}
+            <a
+              href="https://policies.google.com/privacy"
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              Privacy Policy
+            </a>{' '}
+            and{' '}
+            <a
+              href="https://policies.google.com/terms"
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              Terms of Service
+            </a>{' '}
+            apply.
+          </p>
+        )}
       </div>
     </div>
   )

@@ -1,11 +1,12 @@
 import { getApp, getApps, initializeApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app'
+import { initializeApplicationCheck } from './appCheck'
 
 /**
  * Single place the Firebase App is created.
  *
- * Only the App is initialised here. Auth, Firestore and App Check are added in
- * their own phases and will import `getFirebaseApp()` rather than repeating the
- * configuration — nothing else in the codebase reads the environment directly.
+ * The App is created here and App Check is installed on it. Auth and Firestore
+ * import `getFirebaseApp()` rather than repeating the configuration, so nothing
+ * else in the codebase reads the environment directly.
  *
  * The configuration values are public browser identifiers (they name the
  * project; they grant nothing on their own). Real protection comes from
@@ -58,7 +59,10 @@ export async function initializeFirebase(): Promise<FirebaseStatus> {
   }
 
   try {
-    getFirebaseApp()
+    const app = getFirebaseApp()
+    // Before anything else touches Firebase, so every request from here on
+    // carries an attestation token.
+    if (app) initializeApplicationCheck(app)
     return 'ready'
   } catch (error) {
     console.error('[firebase] Initialisation failed', error)

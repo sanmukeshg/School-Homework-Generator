@@ -323,3 +323,13 @@
     transform: translateX(320%);
   }
 }
+
+/* ---------------------------------------------------------------
+   reCAPTCHA badge (App Check)
+   The injected badge is fixed bottom-right, on top of the floating
+   create button. Google permits hiding it as long as the required
+   attribution is shown instead — see the sign-in screen.
+   --------------------------------------------------------------- */
+.grecaptcha-badge {
+  visibility: hidden;
+}

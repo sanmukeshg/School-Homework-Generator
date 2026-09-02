@@ -28,8 +28,26 @@ export type AppCheckStatus = 'ready' | 'unconfigured' | 'error'
 
 type ProviderName = 'recaptcha-v3' | 'recaptcha-enterprise'
 
+/**
+ * Accepts the short spelling too. An Enterprise site key handed to the v3
+ * provider fails to mint a token, and with enforcement off that failure is
+ * quiet — so an unrecognised value warns loudly rather than falling back.
+ */
+function readProvider(raw: string | undefined): ProviderName {
+  if (!raw) return 'recaptcha-v3'
+  if (raw === 'recaptcha-enterprise' || raw === 'enterprise') return 'recaptcha-enterprise'
+  if (raw === 'recaptcha-v3' || raw === 'v3') return 'recaptcha-v3'
+
+  console.error(
+    `[app-check] Unknown VITE_APPCHECK_PROVIDER "${raw}". ` +
+      'Expected "recaptcha-enterprise" or "recaptcha-v3". Falling back to reCAPTCHA v3, ' +
+      'which will not work with an Enterprise site key.'
+  )
+  return 'recaptcha-v3'
+}
+
 const siteKey = import.meta.env.VITE_APPCHECK_SITE_KEY as string | undefined
-const providerName = (import.meta.env.VITE_APPCHECK_PROVIDER ?? 'recaptcha-v3') as ProviderName
+const providerName = readProvider(import.meta.env.VITE_APPCHECK_PROVIDER as string | undefined)
 const debugToken = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN as string | undefined
 
 let appCheck: AppCheck | null = null
@@ -81,6 +99,7 @@ export function initializeApplicationCheck(app: FirebaseApp): AppCheckStatus {
       // Keeps a valid token in hand so a save never waits on attestation.
       isTokenAutoRefreshEnabled: true
     })
+    console.info(`[app-check] Active using ${providerName}.`)
     return 'ready'
   } catch (error) {
     // A bad key, a blocked reCAPTCHA script, or no network on first load. With

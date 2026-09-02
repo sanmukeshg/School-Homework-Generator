@@ -9,6 +9,7 @@ import { PreviewPage } from './pages/PreviewPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { WelcomePage } from './pages/WelcomePage'
 import { AuthProvider, useAuth } from './hooks/useAuth'
+import { EntitlementProvider } from './hooks/useEntitlement'
 import { SettingsProvider, useSettings } from './hooks/useSettings'
 import { ToastProvider } from './hooks/useToast'
 import { initializeFirebase } from './firebase/app'
@@ -100,17 +101,19 @@ export default function App() {
           <HashRouter>
             <Boot>
               <RequireAuth>
-                <RequireSchool>
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/new" element={<NewCardRoute />} />
-                    <Route path="/edit/:cardId" element={<EditorRoute />} />
-                    <Route path="/preview/:cardId" element={<PreviewRoute />} />
-                    <Route path="/history" element={<HistoryPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </RequireSchool>
+                <EntitlementProvider>
+                  <RequireSchool>
+                    <Routes>
+                      <Route path="/" element={<HomePage />} />
+                      <Route path="/new" element={<NewCardRoute />} />
+                      <Route path="/edit/:cardId" element={<EditorRoute />} />
+                      <Route path="/preview/:cardId" element={<PreviewRoute />} />
+                      <Route path="/history" element={<HistoryPage />} />
+                      <Route path="/settings" element={<SettingsPage />} />
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                  </RequireSchool>
+                </EntitlementProvider>
               </RequireAuth>
             </Boot>
           </HashRouter>

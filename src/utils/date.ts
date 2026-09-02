@@ -55,3 +55,21 @@ export function relativeDayLabel(key: string): string {
   if (key === toDateKey(yesterday)) return 'Yesterday'
   return formatShortDate(key)
 }
+
+/**
+ * Adds whole calendar months, clamping to the end of the target month so that
+ * 31 August + 6 months lands on 28/29 February rather than spilling into March.
+ */
+export function addCalendarMonths(date: Date, months: number): Date {
+  const day = date.getDate()
+  const result = new Date(date.getTime())
+  result.setDate(1)
+  result.setMonth(result.getMonth() + months)
+  const lastDayOfTargetMonth = new Date(
+    result.getFullYear(),
+    result.getMonth() + 1,
+    0
+  ).getDate()
+  result.setDate(Math.min(day, lastDayOfTargetMonth))
+  return result
+}

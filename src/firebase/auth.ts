@@ -79,7 +79,7 @@ export async function signInWithGoogle(): Promise<SignInResult> {
   if (!navigator.onLine) return { ok: false, reason: 'offline' }
 
   try {
-    await signInWithPopup(instance, googleProvider())
+    await signInWithPopup(instance, googleProvider(), browserPopupRedirectResolver)
     return { ok: true }
   } catch (error) {
     const code = errorCode(error)
@@ -87,7 +87,7 @@ export async function signInWithGoogle(): Promise<SignInResult> {
 
     if (NEEDS_REDIRECT.has(code)) {
       try {
-        await signInWithRedirect(instance, googleProvider())
+        await signInWithRedirect(instance, googleProvider(), browserPopupRedirectResolver)
         // The page navigates away; getRedirectResult() picks it up on return.
         return { ok: true }
       } catch (redirectError) {
@@ -122,7 +122,7 @@ export async function completeRedirectSignIn(): Promise<void> {
   const instance = getFirebaseAuth()
   if (!instance) return
   try {
-    await getRedirectResult(instance)
+    await getRedirectResult(instance, browserPopupRedirectResolver)
   } catch (error) {
     console.error('[auth] Redirect sign-in did not complete', error)
   }

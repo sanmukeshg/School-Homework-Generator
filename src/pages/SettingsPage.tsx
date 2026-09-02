@@ -10,16 +10,19 @@ import {
   SUBJECT_PRESETS
 } from '../data/subjects'
 import { useAuth } from '../hooks/useAuth'
+import { useEntitlement } from '../hooks/useEntitlement'
 import { useSettings } from '../hooks/useSettings'
 import { useToast } from '../hooks/useToast'
 import { deleteAllHomework, exportBackup, restoreBackup } from '../services/backupService'
 import { THEMES } from '../services/themeService'
 import type { ClassOption, SectionOption } from '../types'
+import { formatDisplayDate } from '../utils/date'
 import { resizeImageToDataUrl } from '../utils/file'
 
 export function SettingsPage() {
   const { settings, update, reload } = useSettings()
   const { user, status: authStatus, signOut } = useAuth()
+  const { entitlement } = useEntitlement()
   const { toast, warn } = useToast()
   const logoInput = useRef<HTMLInputElement>(null)
   const restoreInput = useRef<HTMLInputElement>(null)
@@ -186,6 +189,47 @@ export function SettingsPage() {
                 )}
                 <p className="truncate text-xs text-muted">{user.email}</p>
               </div>
+            </div>
+
+            {/* Entitlement, read from the account record in Firestore. */}
+            <div className="mt-3 rounded-xl border border-line bg-surface-2 p-3">
+              {entitlement.state === 'trial' && (
+                <>
+                  <p className="text-sm font-semibold text-ink">Free access</p>
+                  {entitlement.endsAt ? (
+                    <p className="mt-1 text-xs leading-relaxed text-muted">
+                      Your complimentary 6-month access ends on{' '}
+                      <span className="font-semibold text-ink">
+                        {formatDisplayDate(entitlement.endsAt)}
+                      </span>
+                      {entitlement.daysRemaining !== null &&
+                        ` · ${entitlement.daysRemaining} days left`}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted">Setting up your free access…</p>
+                  )}
+                </>
+              )}
+
+              {entitlement.state === 'active' && (
+                <p className="text-sm font-semibold text-ink">Subscription active</p>
+              )}
+
+              {entitlement.state === 'expired' && (
+                <>
+                  <p className="text-sm font-semibold text-ink">Your free access has ended.</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted">
+                    Subscription plans will be available soon. Nothing you have saved has been
+                    removed.
+                  </p>
+                </>
+              )}
+
+              {entitlement.state === 'unknown' && (
+                <p className="text-xs text-muted">
+                  Account details will appear once you are back online.
+                </p>
+              )}
             </div>
 
             <button

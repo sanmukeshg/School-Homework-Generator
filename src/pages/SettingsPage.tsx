@@ -9,6 +9,7 @@ import {
   nextCustomColor,
   SUBJECT_PRESETS
 } from '../data/subjects'
+import { useAuth } from '../hooks/useAuth'
 import { useSettings } from '../hooks/useSettings'
 import { useToast } from '../hooks/useToast'
 import { deleteAllHomework, exportBackup, restoreBackup } from '../services/backupService'
@@ -18,6 +19,7 @@ import { resizeImageToDataUrl } from '../utils/file'
 
 export function SettingsPage() {
   const { settings, update, reload } = useSettings()
+  const { user, status: authStatus, signOut } = useAuth()
   const { toast, warn } = useToast()
   const logoInput = useRef<HTMLInputElement>(null)
   const restoreInput = useRef<HTMLInputElement>(null)
@@ -163,6 +165,39 @@ export function SettingsPage() {
       <TopBar title="Settings" />
 
       <div className="screen-body space-y-4 pt-4">
+        {/* Account */}
+        {authStatus === 'signed-in' && user && (
+          <section className="panel">
+            <h2 className="panel-title mb-3">Account</h2>
+
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-surface-2">
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-sm font-semibold text-muted">
+                    {(user.displayName || user.email || '?').charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                {user.displayName && (
+                  <p className="truncate text-sm font-semibold text-ink">{user.displayName}</p>
+                )}
+                <p className="truncate text-xs text-muted">{user.email}</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="btn-secondary mt-3 w-full text-sm"
+            >
+              Sign out
+            </button>
+          </section>
+        )}
+
         {/* Appearance — one compact Light / Dark toggle */}
         <section className="panel">
           <h2 className="panel-title mb-3">Appearance</h2>

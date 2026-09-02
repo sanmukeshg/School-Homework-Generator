@@ -4,9 +4,11 @@ import { BootPage } from './pages/BootPage'
 import { EditorPage } from './pages/EditorPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { HomePage } from './pages/HomePage'
+import { LoginPage } from './pages/LoginPage'
 import { PreviewPage } from './pages/PreviewPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { WelcomePage } from './pages/WelcomePage'
+import { AuthProvider, useAuth } from './hooks/useAuth'
 import { SettingsProvider, useSettings } from './hooks/useSettings'
 import { ToastProvider } from './hooks/useToast'
 import { initializeFirebase } from './firebase/app'
@@ -37,8 +39,8 @@ function PreviewRoute() {
 
 /**
  * Start-up gate. Holds the Factory AI boot screen until Firebase has been
- * initialised and the local configuration has been read — no timers, no
- * artificial minimum duration.
+ * initialised, the sign-in state is known and the local configuration has been
+ * read — no timers, no artificial minimum duration.
  *
  * Firebase failing or being absent does not block start-up: the app is
  * offline-first and every screen works from IndexedDB, so a bad network on
@@ -46,6 +48,7 @@ function PreviewRoute() {
  */
 function Boot({ children }: { children: ReactNode }) {
   const { ready: settingsReady } = useSettings()
+  const { status: authStatus } = useAuth()
   const [firebaseSettled, setFirebaseSettled] = useState(false)
 
   useEffect(() => {
@@ -58,7 +61,20 @@ function Boot({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  if (!settingsReady || !firebaseSettled) return <BootPage />
+  if (!settingsReady || !firebaseSettled || authStatus === 'loading') return <BootPage />
+  return <>{children}</>
+}
+
+/**
+ * Google sign-in stands in front of the app.
+ *
+ * When a build carries no Firebase configuration the status is 'unavailable'
+ * and the gate steps aside, rather than locking the teacher out of an app that
+ * works perfectly well offline.
+ */
+function RequireAuth({ children }: { children: ReactNode }) {
+  const { status } = useAuth()
+  if (status === 'signed-out') return <LoginPage />
   return <>{children}</>
 }
 
@@ -78,24 +94,28 @@ function RequireSchool({ children }: { children: ReactNode }) {
  */
 export default function App() {
   return (
-    <SettingsProvider>
-      <ToastProvider>
-        <HashRouter>
-          <Boot>
-            <RequireSchool>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/new" element={<NewCardRoute />} />
-                <Route path="/edit/:cardId" element={<EditorRoute />} />
-                <Route path="/preview/:cardId" element={<PreviewRoute />} />
-                <Route path="/history" element={<HistoryPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </RequireSchool>
-          </Boot>
-        </HashRouter>
-      </ToastProvider>
-    </SettingsProvider>
+    <AuthProvider>
+      <SettingsProvider>
+        <ToastProvider>
+          <HashRouter>
+            <Boot>
+              <RequireAuth>
+                <RequireSchool>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/new" element={<NewCardRoute />} />
+                    <Route path="/edit/:cardId" element={<EditorRoute />} />
+                    <Route path="/preview/:cardId" element={<PreviewRoute />} />
+                    <Route path="/history" element={<HistoryPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </RequireSchool>
+              </RequireAuth>
+            </Boot>
+          </HashRouter>
+        </ToastProvider>
+      </SettingsProvider>
+    </AuthProvider>
   )
 }

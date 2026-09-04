@@ -482,7 +482,8 @@ export function SettingsPage() {
           </div>
 
           <p className="mt-3 text-[11px] leading-relaxed text-faint">
-            The logo is resized and stored on this phone only. It is never uploaded anywhere.
+            The logo is resized on this phone and saved to your account, so it appears on your
+            other devices too.
           </p>
         </div>
       </BottomSheet>

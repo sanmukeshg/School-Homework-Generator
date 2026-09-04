@@ -50,11 +50,19 @@ export function BottomSheet({
 }: BottomSheetProps) {
   const panel = useRef<HTMLDivElement>(null)
 
+  // Held in a ref so the effect below can depend on `open` alone. Callers pass
+  // an inline arrow, which is a new function on every render; depending on it
+  // directly re-ran this effect on every keystroke, and the focus call at the
+  // end of it pulled focus off the field being typed into — which on iOS shut
+  // the keyboard after each character.
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
+
   useEffect(() => {
     if (!open) return
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') closeRef.current()
     }
     document.addEventListener('keydown', onKey)
 
@@ -76,7 +84,7 @@ export function BottomSheet({
       document.body.style.overflow = previous
       window.clearTimeout(focusTimer)
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
 

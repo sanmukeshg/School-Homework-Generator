@@ -179,7 +179,7 @@ export function HomePage() {
         )}
 
         <p className="mt-6 px-1 text-center text-[11px] leading-relaxed text-faint">
-          Everything is stored on this phone only. Take a backup from Settings now and then.
+          Saved to your account, and kept on this phone so it works offline.
         </p>
       </div>
 

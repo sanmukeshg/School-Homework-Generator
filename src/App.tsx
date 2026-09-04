@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { HashRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { AppTour } from './components/AppTour'
 import { AdminPage } from './pages/AdminPage'
@@ -18,6 +18,7 @@ import { useHomeworkSync } from './hooks/useHomeworkSync'
 import { SettingsProvider, useSettings } from './hooks/useSettings'
 import { ToastProvider } from './hooks/useToast'
 import { initializeFirebase } from './firebase/app'
+import { ensureAccountScope } from './services/accountScope'
 import { isSchoolConfigured } from './services/settingsService'
 import { uid } from './utils/id'
 
@@ -41,6 +42,55 @@ function EditorRoute() {
 function PreviewRoute() {
   const { cardId = '' } = useParams<{ cardId: string }>()
   return <PreviewPage key={cardId} cardId={cardId} />
+}
+
+/**
+ * Isolates the device's local data to the account signing in.
+ *
+ * Sits above SettingsProvider deliberately. Everything below reads IndexedDB
+ * the moment it mounts, so the reconciliation has to finish first — if it ran
+ * alongside, the previous account's settings would already be in memory and
+ * would be seeded into the new account's cloud document before the wipe landed.
+ *
+ * The subtree is keyed by uid, so changing account remounts it. That throws
+ * away in-memory state as well as stored state; without it, SettingsProvider
+ * would keep holding the previous teacher's settings after the database
+ * beneath it had been cleared.
+ */
+function AccountScope({ children }: { children: ReactNode }) {
+  const { user, status } = useAuth()
+  const uid = user?.uid ?? null
+  const [scopedTo, setScopedTo] = useState<string | null | undefined>(undefined)
+
+  useEffect(() => {
+    // Wait for a definite answer; 'loading' is not one.
+    if (status === 'loading') return
+
+    let cancelled = false
+    setScopedTo(undefined)
+
+    void ensureAccountScope(uid)
+      .then((result) => {
+        if (result.action === 'cleared') {
+          console.info('[account] A different account owned this device; local data cleared.')
+        }
+      })
+      .catch((error) => {
+        // Never strand the teacher on a splash screen over this.
+        console.error('[account] Could not reconcile the local cache', error)
+      })
+      .finally(() => {
+        if (!cancelled) setScopedTo(uid)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [status, uid])
+
+  if (status === 'loading' || scopedTo === undefined) return <BootPage />
+
+  return <Fragment key={scopedTo ?? 'signed-out'}>{children}</Fragment>
 }
 
 /**
@@ -157,7 +207,8 @@ function RequireSchool({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <AuthProvider>
-      <SettingsProvider>
+      <AccountScope>
+        <SettingsProvider>
         <ToastProvider>
           <HashRouter>
             <Boot>
@@ -188,7 +239,8 @@ export default function App() {
             </Boot>
           </HashRouter>
         </ToastProvider>
-      </SettingsProvider>
+        </SettingsProvider>
+      </AccountScope>
     </AuthProvider>
   )
 }

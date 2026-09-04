@@ -55,6 +55,20 @@ export function isTourPending(): boolean {
   return read() === 'pending'
 }
 
+/**
+ * Forgets the walkthrough entirely.
+ *
+ * Used when a different account takes over this device: the next teacher must
+ * be offered the tour, not inherit the last one's decision to skip it.
+ */
+export function clearTourState(): void {
+  try {
+    localStorage.removeItem(KEY)
+  } catch {
+    /* Nothing to do. */
+  }
+}
+
 export function markTourDone(): void {
   write('done')
 }

@@ -6,6 +6,7 @@ import {
   INDEX_BY_SLOT,
   STORE_CARDS,
   STORE_DRAFTS,
+  STORE_META,
   STORE_SETTINGS,
   type AlmanacDB
 } from './schema'
@@ -40,6 +41,13 @@ export function getDB(): Promise<IDBPDatabase<AlmanacDB>> {
 
         if (!db.objectStoreNames.contains(STORE_DRAFTS)) {
           db.createObjectStore(STORE_DRAFTS, { keyPath: 'id' })
+        }
+
+        // v3. Deliberately left empty for an existing installation: unowned
+        // data is claimed by the next account to sign in, which is what keeps
+        // a teacher already using the app from losing anything.
+        if (!db.objectStoreNames.contains(STORE_META)) {
+          db.createObjectStore(STORE_META, { keyPath: 'key' })
         }
 
         // v1 records predate class/section. Keep them — their old date-based id
@@ -102,4 +110,4 @@ export async function clearHomeworkData(): Promise<void> {
   ])
 }
 
-export { INDEX_BY_DATE, INDEX_BY_SLOT, STORE_CARDS, STORE_DRAFTS, STORE_SETTINGS }
+export { INDEX_BY_DATE, INDEX_BY_SLOT, STORE_CARDS, STORE_DRAFTS, STORE_META, STORE_SETTINGS }

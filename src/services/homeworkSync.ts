@@ -1,4 +1,5 @@
 import { getDB, normaliseCard, STORE_CARDS } from '../db'
+import { readCacheOwner } from './accountScope'
 import {
   cloudListCards,
   cloudPutCards,
@@ -61,7 +62,16 @@ async function writeLocalCards(cards: HomeworkCard[], removeIds: string[]): Prom
  * a card deleted on another device from being resurrected here on every launch.
  */
 async function migrate(uid: string, cloud: HomeworkCard[]): Promise<void> {
-  const local = await readLocalCards()
+  // Only ever merge a cache this account owns. ensureAccountScope() has
+  // already guaranteed it, and this second check is what makes the leak
+  // structurally impossible rather than merely prevented: local work is never
+  // attributed to whoever happens to be signed in.
+  const owner = await readCacheOwner()
+  const local = owner === uid ? await readLocalCards() : []
+  if (owner !== uid) {
+    console.warn('[homework] Local cache belongs to another account; not merging it.')
+  }
+
   const byId = new Map<string, HomeworkCard>()
 
   for (const card of cloud) byId.set(card.id, card)

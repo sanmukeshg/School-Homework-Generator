@@ -10,3 +10,7 @@ dist-ssr
 
 # Firebase CLI cache
 .firebase/
+
+# Firestore emulator artefacts from npm run test:rules
+firestore-debug.log
+ui-debug.log

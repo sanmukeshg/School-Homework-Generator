@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { HashRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { AppTour } from './components/AppTour'
+import { AdminPage } from './pages/AdminPage'
 import { BootPage } from './pages/BootPage'
 import { EditorPage } from './pages/EditorPage'
 import { HistoryPage } from './pages/HistoryPage'
@@ -11,6 +12,8 @@ import { SettingsPage } from './pages/SettingsPage'
 import { WelcomePage } from './pages/WelcomePage'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { EntitlementProvider } from './hooks/useEntitlement'
+import { useIsMobile } from './hooks/useIsMobile'
+import { RoleProvider, useRole } from './hooks/useRole'
 import { useHomeworkSync } from './hooks/useHomeworkSync'
 import { SettingsProvider, useSettings } from './hooks/useSettings'
 import { ToastProvider } from './hooks/useToast'
@@ -81,6 +84,56 @@ function RequireAuth({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+/**
+ * Sends an administrator to the Admin Panel instead of the teacher app.
+ *
+ * Three conditions, all of which must hold:
+ *
+ * - the account really is an administrator, which is a Firestore read the
+ *   rules allow only for the account's own entry;
+ * - the viewport is phone-sized, because the panel is a mobile-only surface
+ *   and the desktop experience is meant to stay exactly as it was;
+ * - they have not asked to preview the teacher app.
+ *
+ * This decides what is drawn. It is not the security boundary and cannot be:
+ * every read and write the panel makes is checked again by the Security Rules,
+ * so forcing this branch open in a debugger yields a panel full of refusals.
+ * Equally, a wide window hides the panel without taking any right away.
+ */
+function RoleRouter({ children }: { children: ReactNode }) {
+  const { isAdmin, ready, previewingApp } = useRole()
+  const isMobile = useIsMobile()
+
+  // Hold the splash rather than flashing the teacher app at an administrator.
+  if (!ready) return <BootPage />
+  if (isAdmin && isMobile && !previewingApp) return <AdminPage />
+  return <>{children}</>
+}
+
+/**
+ * Lets an administrator previewing the teacher app get back out, without
+ * changing their role. Only rendered for someone who is actually previewing.
+ */
+function PreviewBanner() {
+  const { isAdmin, previewingApp, setPreviewingApp } = useRole()
+  const showing = isAdmin && previewingApp
+
+  // The bar is fixed, so the app is given exactly its height back at the root;
+  // without that it would sit on top of the school name.
+  useEffect(() => {
+    document.body.classList.toggle('is-previewing', showing)
+    return () => document.body.classList.remove('is-previewing')
+  }, [showing])
+
+  if (!showing) return null
+
+  return (
+    <button type="button" onClick={() => setPreviewingApp(false)} className="preview-bar">
+      Previewing as teacher · Back to Admin
+    </button>
+  )
+}
+
 /** Keeps the local homework cache in step with the account. */
 function HomeworkSync({ children }: { children: ReactNode }) {
   useHomeworkSync()
@@ -109,23 +162,28 @@ export default function App() {
           <HashRouter>
             <Boot>
               <RequireAuth>
-                <EntitlementProvider>
-                  <HomeworkSync>
-                    <RequireSchool>
-                      <Routes>
-                        <Route path="/" element={<HomePage />} />
-                        <Route path="/new" element={<NewCardRoute />} />
-                        <Route path="/edit/:cardId" element={<EditorRoute />} />
-                        <Route path="/preview/:cardId" element={<PreviewRoute />} />
-                        <Route path="/history" element={<HistoryPage />} />
-                        <Route path="/settings" element={<SettingsPage />} />
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                      </Routes>
-                      {/* Rides above the routes so it can point at any screen. */}
-                      <AppTour />
-                    </RequireSchool>
-                  </HomeworkSync>
-                </EntitlementProvider>
+                <RoleProvider>
+                  <RoleRouter>
+                    <PreviewBanner />
+                    <EntitlementProvider>
+                      <HomeworkSync>
+                        <RequireSchool>
+                          <Routes>
+                            <Route path="/" element={<HomePage />} />
+                            <Route path="/new" element={<NewCardRoute />} />
+                            <Route path="/edit/:cardId" element={<EditorRoute />} />
+                            <Route path="/preview/:cardId" element={<PreviewRoute />} />
+                            <Route path="/history" element={<HistoryPage />} />
+                            <Route path="/settings" element={<SettingsPage />} />
+                            <Route path="*" element={<Navigate to="/" replace />} />
+                          </Routes>
+                          {/* Rides above the routes so it can point at any screen. */}
+                          <AppTour />
+                        </RequireSchool>
+                      </HomeworkSync>
+                    </EntitlementProvider>
+                  </RoleRouter>
+                </RoleProvider>
               </RequireAuth>
             </Boot>
           </HashRouter>

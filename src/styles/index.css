@@ -319,6 +319,22 @@
   }
 
   /* ---------------------------------------------------------------
+     Admin previewing the teacher app
+     --------------------------------------------------------------- */
+  .preview-bar {
+    @apply fixed inset-x-0 top-0 z-[55] w-full text-center text-[11px] font-semibold;
+    height: calc(26px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    background-image: linear-gradient(90deg, rgb(var(--c-primary)), rgb(var(--c-primary-2)));
+    color: rgb(var(--c-on-primary));
+  }
+  /* Push the whole app down by exactly the bar's height, so it sits above the
+     screen rather than on top of it. */
+  body.is-previewing #root {
+    padding-top: calc(26px + env(safe-area-inset-top));
+  }
+
+  /* ---------------------------------------------------------------
      Guided tour
      --------------------------------------------------------------- */
   .tour-hole {

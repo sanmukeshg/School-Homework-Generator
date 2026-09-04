@@ -6,8 +6,8 @@ rules_version = '2';
 // to the signed-in user's own uid taken from request.auth — never from a value
 // the client sends.
 //
-// Covered: the profile, its settings, its homework, the sync marker and the
-// account record.
+// Covered: the profile, its settings, its homework, the sync marker, the
+// account record, feedback, and the admin role.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -19,10 +19,56 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    /**
+     * Administrator, decided by the existence of admins/{uid}.
+     *
+     * The role lives in the database rather than in a custom claim so that it
+     * can be granted and revoked from the Admin Panel itself, and takes effect
+     * on the next request rather than when a token happens to refresh. The cost
+     * is one document read per evaluation, so this is deliberately never called
+     * on a teacher's own path: those rules are unchanged and still evaluate
+     * with no extra read. Where a rule serves both, the cheap ownership test is
+     * written first so `||` short-circuits before this is reached.
+     */
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // ---------------------------------------------------------------
+    // The admin role itself
+    //
+    // A document here IS the grant; its fields are only a record of who gave
+    // it and when. The first administrator has to be created out of band (the
+    // Firebase console, or the Admin SDK, which bypasses these rules) — no
+    // client can mint the first one, which is the point.
+    // ---------------------------------------------------------------
+    match /admins/{uid} {
+      // A signed-in user may read their own entry, and only their own: that
+      // read is how the app decides which experience to show. For everyone who
+      // is not an administrator it simply comes back missing.
+      allow get: if isOwner(uid) || isAdmin();
+      allow list: if isAdmin();
+
+      allow create: if isAdmin()
+        && request.resource.data.uid == uid
+        && request.resource.data.grantedBy == request.auth.uid
+        && request.resource.data.grantedAt == request.time;
+
+      // The grant is a fact, not a record to be edited.
+      allow update: if false;
+
+      // An administrator may stand another one down, never themselves — that
+      // is how a project ends up with nobody who can administer it.
+      allow delete: if isAdmin() && uid != request.auth.uid;
+    }
+
     // A convenience copy of the Google profile. Nothing depends on it, but it
     // is still the user's own data and nobody else may read it.
     match /users/{uid} {
-      allow read: if isOwner(uid);
+      allow get: if isOwner(uid) || isAdmin();
+      // Only an administrator may enumerate accounts.
+      allow list: if isAdmin();
 
       allow create: if isOwner(uid)
         && request.resource.data.uid == uid
@@ -54,6 +100,9 @@ service cloud.firestore {
       // anyone else's. The shape checks are cheap guards, not the security
       // boundary — ownership is. updatedAt must be the server's clock so a
       // wrong device clock cannot make a stale card win a merge.
+      //
+      // Deliberately not readable by an administrator: managing accounts does
+      // not require reading what teachers set for their classes.
       match /homework/{cardId} {
         allow read, delete: if isOwner(uid);
         allow create, update: if isOwner(uid)
@@ -77,9 +126,12 @@ service cloud.firestore {
     // The account record. A client may bring its own trial into existence and
     // may never touch it again: no extending it, no switching itself to a paid
     // plan, no writing payment fields. Those changes come from a trusted
-    // backend using the Admin SDK, which bypasses these rules entirely.
+    // backend using the Admin SDK, which bypasses these rules entirely —
+    // an administrator reads these but cannot write them either, so that
+    // boundary holds no matter who is signed in.
     match /subscriptions/{uid} {
-      allow read: if isOwner(uid);
+      allow get: if isOwner(uid) || isAdmin();
+      allow list: if isAdmin();
 
       allow create: if isOwner(uid)
         && request.resource.data.uid == uid
@@ -106,6 +158,44 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data)
              .affectedKeys().hasOnly(['trialEndsAt', 'updatedAt']);
 
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------------
+    // Feedback
+    //
+    // A teacher writes their own and reads their own; an administrator reads
+    // everybody's and moves them through the pipeline. The ownership test is
+    // written before isAdmin() so a teacher's own read never pays for the
+    // admin lookup.
+    // ---------------------------------------------------------------
+    match /feedback/{feedbackId} {
+      allow read: if isSignedIn()
+        && (resource.data.uid == request.auth.uid || isAdmin());
+
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.status == 'new'
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 2000
+        && request.resource.data.category in
+             ['idea', 'problem', 'question', 'other']
+        && request.resource.data.adminNote == '';
+
+      // Only an administrator moves a item along, and only its status and note
+      // may move — the message, its author and when it arrived are the record.
+      allow update: if isAdmin()
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.status in
+             ['new', 'under-review', 'planned', 'implemented', 'dismissed']
+        && request.resource.data.adminNote is string
+        && request.resource.data.adminNote.size() <= 2000
+        && request.resource.data.diff(resource.data)
+             .affectedKeys().hasOnly(['status', 'adminNote', 'updatedAt']);
+
+      // Feedback is a record. Nobody deletes it, including an administrator.
       allow delete: if false;
     }
   }

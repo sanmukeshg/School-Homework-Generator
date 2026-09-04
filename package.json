@@ -10,7 +10,8 @@
     "preview": "vite preview --host",
     "icons": "node scripts/generate-icons.mjs",
     "typecheck": "tsc -b --pretty false",
-    "brand": "node scripts/prepare-brand-logo.mjs"
+    "brand": "node scripts/prepare-brand-logo.mjs",
+    "test:rules": "npx firebase-tools emulators:exec --only firestore \"node scripts/test-rules.mjs\""
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
@@ -24,6 +25,7 @@
     "react-router-dom": "^6.26.2"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@types/node": "^26.4.0",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",

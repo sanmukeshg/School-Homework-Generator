@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmSheet } from '../components/ConfirmSheet'
+import { FeedbackSheet } from '../components/FeedbackSheet'
 import { TopBar } from '../components/TopBar'
 import { ChevronRightIcon } from '../components/icons'
 import { toOptionId } from '../data/academics'
@@ -48,6 +49,7 @@ export function SettingsPage() {
   const [newSection, setNewSection] = useState('')
   const [newSubject, setNewSubject] = useState('')
   const [askDeleteAll, setAskDeleteAll] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   // The school name and initials are held while the sheet is open and written
   // on Save, so a half-typed name never reaches the saved card.
@@ -293,6 +295,12 @@ export function SettingsPage() {
             title="Subjects"
             value={`${subjectCount} offered · ${defaultCount} loaded by default`}
             onOpen={() => setSheet('subjects')}
+          />
+
+          <SettingCard
+            title="User Feedback"
+            value="Send an idea or report a problem"
+            onOpen={() => setFeedbackOpen(true)}
           />
 
           <SettingCard
@@ -681,6 +689,8 @@ export function SettingsPage() {
         className="hidden"
         onChange={(event) => void handleRestore(event.target.files?.[0])}
       />
+
+      <FeedbackSheet open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
 
       <ConfirmSheet
         open={askDeleteAll}

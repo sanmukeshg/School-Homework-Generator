@@ -142,6 +142,19 @@ export function EditorPage({ cardId }: EditorPageProps) {
     return [...offered, { id: currentKey, preset: resolveSubject(settings, currentKey) }]
   }
 
+  /**
+   * Throws away the restored draft and leaves.
+   *
+   * The teacher got here by tapping a draft on a list, so the answer to
+   * "discard this" is to put them back on that list — staying on a now-empty
+   * editor reads as if the app had started a brand new card for them.
+   */
+  async function discardAndLeave() {
+    await editor.discardDraft()
+    if (window.history.length > 1) navigate(-1)
+    else navigate('/', { replace: true })
+  }
+
   async function openExisting(existing: HomeworkCard) {
     setConflictOpen(false)
     // The card being abandoned was never saved — drop its draft so it does not
@@ -171,7 +184,7 @@ export function EditorPage({ cardId }: EditorPageProps) {
             <span>Unsaved work from last time was restored.</span>
             <button
               type="button"
-              onClick={() => void editor.discardDraft()}
+              onClick={() => void discardAndLeave()}
               className="flex-shrink-0 rounded-lg border border-accent/50 px-2.5 py-2 font-semibold"
             >
               Discard

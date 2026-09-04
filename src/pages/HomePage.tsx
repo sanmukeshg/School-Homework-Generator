@@ -85,6 +85,7 @@ export function HomePage() {
 
           <button
             type="button"
+            data-tour="create"
             onClick={() => setStartOpen(true)}
             className="btn-primary mt-4 w-full text-base"
           >

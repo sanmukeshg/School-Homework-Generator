@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
 import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmSheet } from '../components/ConfirmSheet'
@@ -17,6 +18,7 @@ import { useSettings } from '../hooks/useSettings'
 import { useToast } from '../hooks/useToast'
 import { deleteAllHomework, exportBackup, restoreBackup } from '../services/backupService'
 import { THEMES } from '../services/themeService'
+import { markTourPending } from '../services/tourService'
 import type { ClassOption, SectionOption } from '../types'
 import { formatDisplayDate } from '../utils/date'
 import { resizeImageToDataUrl } from '../utils/file'
@@ -33,6 +35,7 @@ type SheetKey =
   | 'reset'
 
 export function SettingsPage() {
+  const navigate = useNavigate()
   const { settings, update, reload } = useSettings()
   const { user, status: authStatus, signOut } = useAuth()
   const { entitlement } = useEntitlement()
@@ -306,7 +309,18 @@ export function SettingsPage() {
           />
         </div>
 
-        <p className="mt-6 pb-2 text-center text-[11px] text-faint">
+        <button
+          type="button"
+          onClick={() => {
+            markTourPending()
+            navigate('/')
+          }}
+          className="btn-ghost mx-auto mt-6 w-full max-w-xs text-sm"
+        >
+          Show the app tour again
+        </button>
+
+        <p className="mt-4 pb-2 text-center text-[11px] text-faint">
           Tap a card to change it · works offline
         </p>
       </div>

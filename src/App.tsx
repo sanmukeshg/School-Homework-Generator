@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { HashRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
+import { AppTour } from './components/AppTour'
 import { BootPage } from './pages/BootPage'
 import { EditorPage } from './pages/EditorPage'
 import { HistoryPage } from './pages/HistoryPage'
@@ -120,6 +121,8 @@ export default function App() {
                         <Route path="/settings" element={<SettingsPage />} />
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
+                      {/* Rides above the routes so it can point at any screen. */}
+                      <AppTour />
                     </RequireSchool>
                   </HomeworkSync>
                 </EntitlementProvider>

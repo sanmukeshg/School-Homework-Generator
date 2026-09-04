@@ -101,6 +101,7 @@ export function HistoryPage() {
         right={
           <button
             type="button"
+            data-tour="history-filter"
             onClick={() => setFilterOpen(true)}
             aria-label={filtering ? 'Change filters' : 'Filter history'}
             className={['icon-btn relative', filtering ? 'text-brand' : ''].join(' ')}

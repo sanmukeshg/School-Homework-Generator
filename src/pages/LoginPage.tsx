@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BrandMark } from '../components/BrandMark'
 import { GoogleIcon, OfflineIcon, ShieldIcon, TeacherIcon } from '../components/icons'
+import { APP_VERSION_SHORT } from '../config/appInfo'
 import { useAuth } from '../hooks/useAuth'
 import { isAppCheckConfigured } from '../firebase/appCheck'
 
@@ -154,6 +155,10 @@ export function LoginPage() {
               apply.
             </p>
           )}
+
+          <p className="mt-3 text-center text-[10px] tracking-wide text-faint">
+            {APP_VERSION_SHORT}
+          </p>
         </div>
       </div>
     </div>

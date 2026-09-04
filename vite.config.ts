@@ -1,6 +1,11 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+
+// The one place the app's version lives. Bumping package.json is the whole
+// release step; every screen that shows a version reads this.
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
 
 // BASE_PATH lets the same build target GitHub Pages project sites ("/repo/"),
 // Netlify / Vercel / Cloudflare Pages ("/") without code changes.
@@ -8,6 +13,9 @@ const base = process.env.BASE_PATH || '/'
 
 export default defineConfig({
   base,
+  define: {
+    __APP_VERSION__: JSON.stringify(version)
+  },
   plugins: [
     react(),
     VitePWA({

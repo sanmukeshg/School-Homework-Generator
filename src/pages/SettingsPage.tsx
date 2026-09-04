@@ -5,7 +5,8 @@ import { BottomSheet } from '../components/BottomSheet'
 import { ConfirmSheet } from '../components/ConfirmSheet'
 import { FeedbackSheet } from '../components/FeedbackSheet'
 import { TopBar } from '../components/TopBar'
-import { ChevronRightIcon } from '../components/icons'
+import { ChevronRightIcon, MoonIcon, SunIcon } from '../components/icons'
+import { APP_VERSION_LABEL } from '../config/appInfo'
 import { toOptionId } from '../data/academics'
 import {
   isBuiltInSubject,
@@ -18,7 +19,6 @@ import { useEntitlement } from '../hooks/useEntitlement'
 import { useSettings } from '../hooks/useSettings'
 import { useToast } from '../hooks/useToast'
 import { deleteAllHomework, exportBackup, restoreBackup } from '../services/backupService'
-import { THEMES } from '../services/themeService'
 import { markTourPending } from '../services/tourService'
 import type { ClassOption, SectionOption } from '../types'
 import { formatDisplayDate } from '../utils/date'
@@ -27,7 +27,6 @@ import { resizeImageToDataUrl } from '../utils/file'
 /** Which editor sheet is open, if any. */
 type SheetKey =
   | 'account'
-  | 'appearance'
   | 'school'
   | 'logo'
   | 'academics'
@@ -205,7 +204,8 @@ export function SettingsPage() {
     }
   }
 
-  const themeLabel = THEMES.find((theme) => theme.id === settings.theme)?.label ?? 'Light'
+  // The theme the toggle would switch to.
+  const nextTheme = settings.theme === 'dark' ? 'light' : 'dark'
   const subjectCount = listSubjects(settings).length
   const defaultCount = settings.defaultSubjects.length
 
@@ -229,7 +229,22 @@ export function SettingsPage() {
 
   return (
     <div className="screen">
-      <TopBar title="Settings" />
+      <TopBar
+        title="Settings"
+        right={
+          <button
+            type="button"
+            onClick={() => update({ theme: nextTheme })}
+            aria-label={`Switch to ${nextTheme === 'dark' ? 'dark' : 'light'} theme`}
+            title={`Switch to ${nextTheme === 'dark' ? 'dark' : 'light'} theme`}
+            className="icon-btn"
+          >
+            {/* Shows the theme you would move to, which is what a single
+                toggle button is read as. */}
+            {nextTheme === 'dark' ? <MoonIcon /> : <SunIcon />}
+          </button>
+        }
+      />
 
       <div className="screen-body pt-4">
         <div className="grid grid-cols-1 gap-3 min-[520px]:grid-cols-2">
@@ -280,12 +295,6 @@ export function SettingsPage() {
           />
 
           <SettingCard
-            title="Appearance"
-            value={`${themeLabel} theme`}
-            onOpen={() => setSheet('appearance')}
-          />
-
-          <SettingCard
             title="Academic Setup"
             value={`${settings.classes.length} classes · ${settings.sections.length} sections`}
             onOpen={() => setSheet('academics')}
@@ -310,6 +319,15 @@ export function SettingsPage() {
           />
 
           <SettingCard
+            title="Show App Tour"
+            value="Replay the guided walkthrough"
+            onOpen={() => {
+              markTourPending()
+              navigate('/')
+            }}
+          />
+
+          <SettingCard
             title="Reset"
             value="Delete all saved homework"
             danger
@@ -317,20 +335,11 @@ export function SettingsPage() {
           />
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            markTourPending()
-            navigate('/')
-          }}
-          className="btn-ghost mx-auto mt-6 w-full max-w-xs text-sm"
-        >
-          Show the app tour again
-        </button>
-
-        <p className="mt-4 pb-2 text-center text-[11px] text-faint">
+        {/* --- 3. version, at the very end --- */}
+        <p className="mt-6 text-center text-[11px] text-faint">
           Tap a card to change it · works offline
         </p>
+        <p className="mt-1.5 pb-2 text-center text-[11px] text-faint">{APP_VERSION_LABEL}</p>
       </div>
 
       {/* ------------------------------ Account ----------------------------- */}
@@ -484,43 +493,6 @@ export function SettingsPage() {
           <p className="mt-3 text-[11px] leading-relaxed text-faint">
             The logo is resized on this phone and saved to your account, so it appears on your
             other devices too.
-          </p>
-        </div>
-      </BottomSheet>
-
-      {/* ----------------------------- Appearance --------------------------- */}
-      <BottomSheet open={sheet === 'appearance'} title="Appearance" onClose={close} footer={done}>
-        <div className="pb-2">
-          <div
-            role="radiogroup"
-            aria-label="Theme"
-            className="flex gap-1 rounded-full border border-line bg-surface-2 p-1"
-          >
-            {THEMES.map((theme) => {
-              const active = settings.theme === theme.id
-              return (
-                <button
-                  key={theme.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => update({ theme: theme.id })}
-                  className={[
-                    'flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-full text-sm font-semibold transition active:scale-95',
-                    active ? 'bg-surface text-ink shadow-sm ring-1 ring-line' : 'text-muted'
-                  ].join(' ')}
-                >
-                  {/* A tick, not colour alone, marks the selection. */}
-                  {active && <span aria-hidden="true">✓</span>}
-                  {theme.label}
-                </button>
-              )
-            })}
-          </div>
-
-          <p className="mt-3 text-[11px] leading-relaxed text-faint">
-            Applies to the app only — the generated homework image always keeps its own colourful
-            design.
           </p>
         </div>
       </BottomSheet>

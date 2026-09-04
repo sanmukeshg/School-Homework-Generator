@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
+import { NewHomeworkSheet } from '../components/NewHomeworkSheet'
 import { PlusIcon } from '../components/icons'
 import { formatClassSection } from '../data/academics'
 import { useHomeworkSyncSignal } from '../hooks/useHomeworkSync'
@@ -13,6 +14,7 @@ import {
 } from '../services/homeworkService'
 import type { HomeworkCard } from '../types'
 import { dayName, formatDisplayDate, relativeDayLabel, todayKey } from '../utils/date'
+import { uid } from '../utils/id'
 
 /** "3 subjects" / "1 subject" */
 function subjectCount(card: HomeworkCard): string {
@@ -26,6 +28,7 @@ export function HomePage() {
   const [today, setToday] = useState<DashboardEntry[]>([])
   const [recent, setRecent] = useState<HomeworkCard[]>([])
   const [loading, setLoading] = useState(true)
+  const [startOpen, setStartOpen] = useState(false)
   // A completed sync should refresh what is already on screen.
   const syncSignal = useHomeworkSyncSignal()
 
@@ -48,6 +51,11 @@ export function HomePage() {
       cancelled = true
     }
   }, [todayId, syncSignal])
+
+  function startCard(basics: { classId: string; sectionId: string; date: string }) {
+    setStartOpen(false)
+    navigate(`/edit/${uid('card')}`, { state: { isNew: true, step: 1, basics } })
+  }
 
   return (
     <div className="screen">
@@ -77,7 +85,7 @@ export function HomePage() {
 
           <button
             type="button"
-            onClick={() => navigate('/new')}
+            onClick={() => setStartOpen(true)}
             className="btn-primary mt-4 w-full text-base"
           >
             Create Homework
@@ -95,7 +103,7 @@ export function HomePage() {
               <p className="text-sm text-muted">No homework cards created today.</p>
               <button
                 type="button"
-                onClick={() => navigate('/new')}
+                onClick={() => setStartOpen(true)}
                 className="btn-secondary mx-auto mt-3"
               >
                 Create Homework
@@ -178,7 +186,7 @@ export function HomePage() {
       <button
         type="button"
         aria-label="Create homework"
-        onClick={() => navigate('/new')}
+        onClick={() => setStartOpen(true)}
         className="fixed right-5 z-40 grid h-14 w-14 place-items-center rounded-full transition active:scale-90"
         style={{
           bottom: 'calc(84px + env(safe-area-inset-bottom))',
@@ -189,6 +197,16 @@ export function HomePage() {
       >
         <PlusIcon />
       </button>
+
+      <NewHomeworkSheet
+        open={startOpen}
+        onClose={() => setStartOpen(false)}
+        onContinue={startCard}
+        onOpenExisting={(existing) => {
+          setStartOpen(false)
+          navigate(`/preview/${existing.id}`)
+        }}
+      />
 
       <BottomNav />
     </div>

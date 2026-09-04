@@ -85,3 +85,145 @@ export function GoogleIcon({ className = 'h-5 w-5' }: IconProps) {
     </svg>
   )
 }
+
+/** Opens the History filter sheet. */
+export function FunnelIcon({ className = 'h-5 w-5' }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M3.5 5.5h17l-6.6 7.6v5.2l-3.8 2v-7.2z" />
+    </svg>
+  )
+}
+
+/** Marks a settings card as tappable. */
+export function ChevronRightIcon({ className = 'h-5 w-5' }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M9 5l7 7-7 7" />
+    </svg>
+  )
+}
+
+/** Opens a calendar field. */
+export function CalendarIcon({ className = 'h-5 w-5' }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+      <path d="M3.5 9.5h17M8 3v4M16 3v4" />
+    </svg>
+  )
+}
+
+/** Completed step in the homework flow. */
+export function CheckIcon({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M5 12.5l4.5 4.5L19 7" />
+    </svg>
+  )
+}
+
+/* -------------------------------------------------------------------------
+   Sign-in screen — one icon per promise the app makes. Line art in the
+   app's own ink, not illustrations.
+   ------------------------------------------------------------------------- */
+
+export function ShieldIcon({ className = 'h-5 w-5' }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M12 3l7.5 3v5.4c0 4.4-3 8.1-7.5 9.6-4.5-1.5-7.5-5.2-7.5-9.6V6z" />
+      <path d="M9.2 12.2l2 2 3.6-3.8" />
+    </svg>
+  )
+}
+
+export function OfflineIcon({ className = 'h-5 w-5' }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M2.5 9.2a15 15 0 0 1 19 0" />
+      <path d="M5.8 12.7a10.4 10.4 0 0 1 12.4 0" />
+      <path d="M9 16.1a5.2 5.2 0 0 1 6 0" />
+      <circle cx="12" cy="19.4" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+export function TeacherIcon({ className = 'h-5 w-5' }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M3.5 6.8L12 3.6l8.5 3.2L12 10z" />
+      <path d="M7 8.9v4.4c0 1.7 2.2 3 5 3s5-1.3 5-3V8.9" />
+      <path d="M20.5 7v5" />
+    </svg>
+  )
+}

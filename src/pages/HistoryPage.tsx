@@ -1,17 +1,24 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
 import { ConfirmSheet } from '../components/ConfirmSheet'
+import {
+  HistoryFilterSheet,
+  isFiltering,
+  matchesFilters,
+  NO_FILTERS,
+  type HistoryFilters
+} from '../components/HistoryFilterSheet'
 import { TopBar } from '../components/TopBar'
-import { TrashIcon } from '../components/icons'
+import { FunnelIcon, TrashIcon } from '../components/icons'
 import { formatClassSection } from '../data/academics'
-import { listSubjects, resolveSubject } from '../data/subjects'
+import { resolveSubject } from '../data/subjects'
 import { useHomeworkSyncSignal } from '../hooks/useHomeworkSync'
 import { useSettings } from '../hooks/useSettings'
 import { useToast } from '../hooks/useToast'
 import { countFilledItems, deleteCard, listCards } from '../services/homeworkService'
 import type { HomeworkCard } from '../types'
-import { isToday } from '../utils/date'
+import { formatDisplayDate, fromDateKey, isToday } from '../utils/date'
 
 export function HistoryPage() {
   const navigate = useNavigate()
@@ -19,9 +26,8 @@ export function HistoryPage() {
   const { toast } = useToast()
   const [cards, setCards] = useState<HomeworkCard[]>([])
   const [loading, setLoading] = useState(true)
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
-  const [subject, setSubject] = useState('')
+  const [filters, setFilters] = useState<HistoryFilters>(NO_FILTERS)
+  const [filterOpen, setFilterOpen] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<HomeworkCard | null>(null)
   const syncSignal = useHomeworkSyncSignal()
 
@@ -45,28 +51,20 @@ export function HistoryPage() {
     toast('Homework deleted')
   }
 
-  const filtering = Boolean(fromDate || toDate || subject)
+  const filtering = isFiltering(filters)
 
   // Filtering is a plain read over data already loaded — offline safe, and it
   // never touches the records themselves. The three filters combine.
   const visible = useMemo(
-    () =>
-      cards.filter((card) => {
-        if (fromDate && card.date < fromDate) return false
-        if (toDate && card.date > toDate) return false
-        if (subject && !card.items.some((item) => item.subjectKey === subject && item.task.trim())) {
-          return false
-        }
-        return true
-      }),
-    [cards, fromDate, toDate, subject]
+    () => cards.filter((card) => matchesFilters(card, filters)),
+    [cards, filters]
   )
 
-  function clearFilters() {
-    setFromDate('')
-    setToDate('')
-    setSubject('')
-  }
+  // Lets the sheet show a live count for a selection that is not applied yet.
+  const countFor = useCallback(
+    (candidate: HistoryFilters) => cards.filter((card) => matchesFilters(card, candidate)).length,
+    [cards]
+  )
 
   // Group by day, newest first (listCards is already sorted that way).
   const days = useMemo(() => {
@@ -79,80 +77,80 @@ export function HistoryPage() {
     return groups
   }, [visible])
 
+  /** Short, readable descriptions of what is currently applied. */
+  const activeChips = useMemo(() => {
+    const chips: string[] = []
+    if (filters.fromDate && filters.toDate) {
+      chips.push(
+        `${formatDisplayDate(fromDateKey(filters.fromDate))} – ${formatDisplayDate(fromDateKey(filters.toDate))}`
+      )
+    } else if (filters.fromDate) {
+      chips.push(`From ${formatDisplayDate(fromDateKey(filters.fromDate))}`)
+    } else if (filters.toDate) {
+      chips.push(`Until ${formatDisplayDate(fromDateKey(filters.toDate))}`)
+    }
+    if (filters.subject) chips.push(resolveSubject(settings, filters.subject).name)
+    return chips
+  }, [filters, settings])
+
   return (
     <div className="screen">
-      <TopBar title="History" subtitle="Every card you have saved" />
+      <TopBar
+        title="History"
+        subtitle="Every card you have saved"
+        right={
+          <button
+            type="button"
+            onClick={() => setFilterOpen(true)}
+            aria-label={filtering ? 'Change filters' : 'Filter history'}
+            className={['icon-btn relative', filtering ? 'text-brand' : ''].join(' ')}
+            style={
+              filtering
+                ? {
+                    borderColor: 'rgb(var(--c-primary) / 0.45)',
+                    backgroundColor: 'rgb(var(--c-primary) / 0.1)'
+                  }
+                : undefined
+            }
+          >
+            <FunnelIcon />
+            {/* A dot, so an active filter is obvious without reading. */}
+            {filtering && (
+              <span
+                aria-hidden="true"
+                className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-brand ring-2 ring-surface-2"
+              />
+            )}
+          </button>
+        }
+      />
 
       <div className="screen-body pt-4">
-        {/* Filters — dates and subject, applied together */}
-        <div className="panel mb-4">
-          <h2 className="panel-title mb-3">Filters</h2>
-
-          <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
-            <div>
-              <label className="field-label" htmlFor="history-from">
-                From date
-              </label>
-              <input
-                id="history-from"
-                type="date"
-                className="field"
-                value={fromDate}
-                max={toDate || undefined}
-                onChange={(event) => setFromDate(event.target.value)}
-              />
-            </div>
-            <div>
-              <label className="field-label" htmlFor="history-to">
-                To date
-              </label>
-              <input
-                id="history-to"
-                type="date"
-                className="field"
-                value={toDate}
-                min={fromDate || undefined}
-                onChange={(event) => setToDate(event.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <label className="field-label" htmlFor="history-subject">
-              Subject
-            </label>
-            <select
-              id="history-subject"
-              className="select"
-              value={subject}
-              onChange={(event) => setSubject(event.target.value)}
-            >
-              <option value="">All subjects</option>
-              {listSubjects(settings).map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.preset.name}
-                </option>
+        {/* What is applied right now, and one tap to drop it. */}
+        {filtering && (
+          <div className="mb-4 flex items-center gap-2 rounded-2xl border border-line bg-surface-2 p-2.5">
+            <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+              {activeChips.map((chip) => (
+                <span key={chip} className="chip-brand normal-case tracking-normal">
+                  {chip}
+                </span>
               ))}
-            </select>
-          </div>
-
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="text-xs text-muted">
-              {filtering
-                ? `Showing ${visible.length} ${visible.length === 1 ? 'card' : 'cards'}`
-                : `${cards.length} ${cards.length === 1 ? 'card' : 'cards'} saved`}
-              {subject && filtering ? ` with ${resolveSubject(settings, subject).name}` : ''}
-            </p>
+            </div>
             <button
               type="button"
-              onClick={clearFilters}
-              disabled={!filtering}
-              className="btn-secondary px-4 text-sm"
+              onClick={() => setFilters(NO_FILTERS)}
+              className="min-h-[40px] flex-shrink-0 rounded-lg px-2.5 text-xs font-semibold text-muted active:scale-95"
             >
               Clear
             </button>
           </div>
-        </div>
+        )}
+
+        <p className="mb-3 px-1 text-xs text-muted">
+          {filtering
+            ? `Showing ${visible.length} of ${cards.length} ${cards.length === 1 ? 'card' : 'cards'}`
+            : `${cards.length} ${cards.length === 1 ? 'card' : 'cards'} saved`}
+        </p>
 
         {loading ? (
           <p className="pt-6 text-center text-sm text-muted">Loading…</p>
@@ -161,10 +159,18 @@ export function HistoryPage() {
             <p className="text-sm text-muted">
               {filtering ? 'No homework matches these filters.' : 'No homework saved yet.'}
             </p>
-            {!filtering && (
+            {filtering ? (
               <button
                 type="button"
-                onClick={() => navigate('/new')}
+                onClick={() => setFilters(NO_FILTERS)}
+                className="btn-secondary mx-auto mt-4"
+              >
+                Clear filters
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => navigate('/')}
                 className="btn-primary mx-auto mt-4"
               >
                 Create Homework
@@ -215,6 +221,18 @@ export function HistoryPage() {
           ))
         )}
       </div>
+
+      <HistoryFilterSheet
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        value={filters}
+        onApply={(next) => {
+          setFilters(next)
+          setFilterOpen(false)
+        }}
+        settings={settings}
+        countFor={countFor}
+      />
 
       <ConfirmSheet
         open={pendingDelete !== null}
